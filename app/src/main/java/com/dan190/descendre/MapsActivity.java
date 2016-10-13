@@ -62,8 +62,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mUiSettings = mMap.getUiSettings();
 
         mUiSettings.setZoomControlsEnabled(true);
+
         startPermission();
         mMap.setMyLocationEnabled(true);
+
+        mUiSettings.setMapToolbarEnabled(true);
 
         LatLng montreal = new LatLng(45.5, -73.6);
         // Add a marker in Sydney and move the camera
@@ -96,7 +99,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      * animate toggle button.
      */
     private void changeCamera(CameraUpdate update, CancelableCallback callback) {
-        mMap.moveCamera(update);
+        mMap.animateCamera(update);
     }
 
     private void startPermission(){
