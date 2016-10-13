@@ -1,7 +1,12 @@
 package com.dan190.descendre;
 
+import android.*;
+import android.Manifest;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.content.ContextCompat;
 import android.view.View;
 import android.widget.Toast;
 
@@ -11,6 +16,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.CancelableCallback;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -19,6 +25,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         GoogleMap.OnMapClickListener{
 
     private GoogleMap mMap;
+    private UiSettings mUiSettings;
+
 
     public static final CameraPosition MONTREAL =
             new CameraPosition.Builder().target(new LatLng(45.5, -73.6))
@@ -50,6 +58,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
+
+        mUiSettings = mMap.getUiSettings();
+
+        mUiSettings.setZoomControlsEnabled(true);
+        startPermission();
+        mMap.setMyLocationEnabled(true);
+
         LatLng montreal = new LatLng(45.5, -73.6);
         // Add a marker in Sydney and move the camera
         /*LatLng montreal = new LatLng(45.5, -73.6);
@@ -69,7 +84,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     public void onGoToMontreal(View v){
-        changeCamera(CameraUpdateFactory.newCameraPosition(MONTREAL));
+        mMap.animateCamera(CameraUpdateFactory.newCameraPosition(MONTREAL), 1000, null);
     }
 
     private void changeCamera(CameraUpdate update) {
@@ -82,5 +97,46 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      */
     private void changeCamera(CameraUpdate update, CancelableCallback callback) {
         mMap.moveCamera(update);
+    }
+
+    private void startPermission(){
+       // if (ContextCompat.checkSelfPermission(this, Manifest.permission.))
+        if(ActivityCompat.shouldShowRequestPermissionRationale(MapsActivity.this,
+                Manifest.permission.ACCESS_FINE_LOCATION)){
+
+            //user has previously seen permission dialogue
+        }
+        else{
+            ActivityCompat.requestPermissions(MapsActivity.this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    1);
+        }
+    }
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case 1: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    // permission was granted, yay! Do the
+                    // contacts-related task you need to do.
+                    Toast.makeText(getApplicationContext(), "Permission Granted", Toast.LENGTH_SHORT).show();
+
+                } else {
+
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                    Toast.makeText(getApplicationContext(), "Permission Denied", Toast.LENGTH_SHORT).show();
+
+                }
+                return;
+            }
+
+            // other 'case' lines to check for other
+            // permissions this app might request
+        }
     }
 }
