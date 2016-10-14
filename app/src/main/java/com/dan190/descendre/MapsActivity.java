@@ -4,6 +4,7 @@ import android.*;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.location.Location;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
@@ -15,6 +16,7 @@ import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.CancelableCallback;
+import com.google.android.gms.maps.LocationSource;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.UiSettings;
@@ -25,12 +27,13 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,
-        GoogleMap.OnMapClickListener{
+        GoogleMap.OnMapClickListener,
+GoogleMap.OnMapLongClickListener{
 
+    /**Members */
     private GoogleMap mMap;
     private UiSettings mUiSettings;
     private Circle circle;
-
 
     public static final CameraPosition MONTREAL =
             new CameraPosition.Builder().target(new LatLng(45.5, -73.6))
@@ -41,6 +44,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     public static final LatLng MONTREAL_LL = new LatLng(45.5, -73.6);
 
+    private LongPressLocationSource longPressLocationSource;
+
+    /**Methods */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -48,7 +54,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
+
+        longPressLocationSource = new LongPressLocationSource();
+
+
         mapFragment.getMapAsync(this);
+
+
     }
 
     @Override
@@ -61,6 +73,28 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         startPermission();
         mMap.setMyLocationEnabled(true);
+        mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+            @Override
+            public void onMapClick(LatLng latLng) {
+                Toast.makeText(getApplicationContext(),
+                        "Clicked " + latLng.toString(),
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
+            @Override
+            public void onMapLongClick(LatLng latLng) {
+                mMap.clear();
+                circle = mMap.addCircle(new CircleOptions()
+                        .center(latLng)
+                        .radius(200)
+                        .strokeColor(Color.BLACK)
+                        .fillColor(0x00000000));
+                mMap.addMarker(new MarkerOptions().position(latLng).title("Picked"));
+
+            }
+        });
 
         mUiSettings.setMapToolbarEnabled(true);
 
@@ -70,23 +104,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 .strokeColor(Color.BLACK)
                 .fillColor(0x00000000));
 
-        LatLng montreal = new LatLng(45.5, -73.6);
+
         // Add a marker in Sydney and move the camera
         /*LatLng montreal = new LatLng(45.5, -73.6);
         mMap.addMarker(new MarkerOptions().position(montreal).title("Marker in Montreal"));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(montreal));*/
 
-        mMap.addMarker(new MarkerOptions().position(montreal).title("Marker in Montreal"));
+        mMap.addMarker(new MarkerOptions().position(MONTREAL_LL).title("Marker in Montreal"));
 
         changeCamera(CameraUpdateFactory.newCameraPosition(MONTREAL));
     }
 
-    @Override
-    public void onMapClick(LatLng point){
-        Toast.makeText(getApplicationContext(),
-                "Clicked " + point.toString(),
-                Toast.LENGTH_SHORT).show();
-    }
 
     public void onGoToMontreal(View v){
         mMap.animateCamera(CameraUpdateFactory.newCameraPosition(MONTREAL), 1000, null);
@@ -96,6 +124,62 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         changeCamera(update, null);
     }
 
+    @Override
+    public void onMapLongClick(LatLng latLng) {
+
+    }
+
+    @Override
+    public void onMapClick(LatLng latLng) {
+
+    }
+
+    /**
+     * A {@link LocationSource} which reports a new location whenever a user long presses the map
+     * at
+     * the point at which a user long pressed the map.
+     */
+    private static class LongPressLocationSource implements LocationSource, GoogleMap.OnMapLongClickListener {
+
+        private OnLocationChangedListener mListener;
+
+        /**
+         * Flag to keep track of the activity's lifecycle. This is not strictly necessary in this
+         * case because onMapLongPress events don't occur while the activity containing the map is
+         * paused but is included to demonstrate best practices (e.g., if a background service were
+         * to be used).
+         */
+        private boolean mPaused;
+
+        @Override
+        public void activate(OnLocationChangedListener listener) {
+            mListener = listener;
+        }
+
+        @Override
+        public void deactivate() {
+            mListener = null;
+        }
+
+        @Override
+        public void onMapLongClick(LatLng point) {
+            if (mListener != null && !mPaused) {
+                Location location = new Location("LongPressLocationProvider");
+                location.setLatitude(point.latitude);
+                location.setLongitude(point.longitude);
+                location.setAccuracy(50);
+                mListener.onLocationChanged(location);
+            }
+        }
+
+        public void onPause() {
+            mPaused = true;
+        }
+
+        public void onResume() {
+            mPaused = false;
+        }
+    }
     /**
      * Change the camera position by moving or animating the camera depending on the state of the
      * animate toggle button.
