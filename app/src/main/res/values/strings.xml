@@ -4,4 +4,5 @@
     <string name="location_permission_denied">Location Permission Denied</string>
     <string name="permission_required_toast">Location Permission Is Required</string>
     <string name="permission_rationale_location">Location Permission is required</string>
+    <string name="search_button">Search</string>
 </resources>

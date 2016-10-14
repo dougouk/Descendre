@@ -4,7 +4,9 @@ import android.*;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.location.Address;
 import android.location.Criteria;
+import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
@@ -13,6 +15,8 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
 import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
@@ -38,7 +42,9 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tagmanager.TagManager;
 
 import java.io.FileDescriptor;
+import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,
@@ -123,7 +129,7 @@ GoogleMap.OnMapLongClickListener,
                 .strokeColor(Color.BLACK)
                 .fillColor(0x00000000));
 
-        
+
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         String provider = locationManager.getBestProvider(new Criteria(), true);
 
@@ -204,5 +210,33 @@ GoogleMap.OnMapLongClickListener,
     @Override
     public void onLocationChanged(Location location) {
         Toast.makeText(getApplicationContext(), "Location Changed", Toast.LENGTH_SHORT).show();
+    }
+
+    public void onMapSearch(View v){
+        EditText locationSearch = (EditText) findViewById(R.id.search_bar);
+        String location = locationSearch.getText().toString();
+        Button searchButton = (Button) findViewById(R.id.search_button);
+
+        List<Address> addressList = null;
+        if(location != null || !location.equals("")){
+            Geocoder geocoder = new Geocoder(this);
+            try{
+                addressList = geocoder.getFromLocationName(location,1);
+            }catch(IOException e){
+                e.printStackTrace();
+            }
+
+            Address address = addressList.get(0);
+            LatLng latLng = new LatLng(address.getLatitude(), address.getLongitude());
+            mMap.clear();
+            mMap.addMarker(new MarkerOptions().position(latLng).title("Searched"));
+            circle = mMap.addCircle(new CircleOptions()
+                    .center(latLng)
+                    .radius(200)
+                    .strokeColor(Color.BLACK)
+                    .fillColor(0x00000000));
+            mMap.animateCamera(CameraUpdateFactory.newLatLng(latLng));
+
+        }
     }
 }
