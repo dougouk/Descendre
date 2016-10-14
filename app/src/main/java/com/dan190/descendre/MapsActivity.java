@@ -1,6 +1,8 @@
 package com.dan190.descendre;
 
 import android.Manifest;
+import android.app.NotificationManager;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Address;
@@ -9,10 +11,13 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
+import android.os.Vibrator;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationManagerCompat;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -60,23 +65,26 @@ GoogleApiClient.ConnectionCallbacks,
     private GoogleApiClient mGoogleAPIClient;
     private LocationRequest locationRequest;
     private Marker chosenDestination;
+    private Vibrator vibrator;
+    private boolean insideCircle;
 
 
 
     public static final CameraPosition MONTREAL =
-            new CameraPosition.Builder().target(new LatLng(45.5, -73.6))
+            new CameraPosition.Builder().target(new LatLng(45.495, -73.58))
                     .zoom(15.5f)
                     .bearing(0)
                     .tilt(0)
                     .build();
 
-    public static final LatLng MONTREAL_LL = new LatLng(45.5, -73.6);
+    public static final LatLng MONTREAL_LL = new LatLng(45.495, -73.58);
 
 
     /**Methods */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        vibrator = (Vibrator) this.getApplicationContext().getSystemService(Context.VIBRATOR_SERVICE);
         setContentView(R.layout.activity_maps);
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
@@ -294,9 +302,25 @@ GoogleApiClient.ConnectionCallbacks,
                 circle.getCenter().latitude, circle.getCenter().longitude, distance);
         if(distance[0] > circle.getRadius()){
             //do nothing
+            if(insideCircle)insideCircle=false;
         }else{
-            Toast.makeText(getApplicationContext(), "INSIDE CIRCLE", Toast.LENGTH_SHORT).show();
+            //Toast.makeText(getApplicationContext(), "INSIDE CIRCLE", Toast.LENGTH_SHORT).show();
+            if(insideCircle)return;
+            insideCircle = true;
+            createNotification();
+            vibrator.vibrate(800);
         }
+    }
+
+    private void createNotification(){
+        NotificationCompat.Builder mBuilder =
+                new NotificationCompat.Builder(this)
+                        .setSmallIcon(R.drawable.checkmark)
+                        .setContentTitle("Arriving")
+                        .setContentText("Close to destination!");
+        mBuilder.setAutoCancel(true);
+        NotificationManager notificationManager = (NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+        notificationManager.notify(001, mBuilder.build());
     }
 
 }

@@ -5,4 +5,5 @@
     <string name="permission_required_toast">Location Permission Is Required</string>
     <string name="permission_rationale_location">Location Permission is required</string>
     <string name="search_button">Search</string>
+    <string name="alarmDialog">Arriving at destination!!</string>
 </resources>
