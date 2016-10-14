@@ -4,14 +4,24 @@ import android.*;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.location.Criteria;
 import android.location.Location;
+import android.location.LocationManager;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
 import android.view.View;
 import android.widget.Toast;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.Api;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -25,15 +35,23 @@ import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.tagmanager.TagManager;
+
+import java.io.FileDescriptor;
+import java.io.PrintWriter;
+import java.util.concurrent.TimeUnit;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,
         GoogleMap.OnMapClickListener,
-GoogleMap.OnMapLongClickListener{
+GoogleMap.OnMapLongClickListener,
+        LocationListener{
 
     /**Members */
     private GoogleMap mMap;
     private UiSettings mUiSettings;
     private Circle circle;
+    private GoogleApiClient googleApiClient;
+    private LocationManager locationManager;
 
     public static final CameraPosition MONTREAL =
             new CameraPosition.Builder().target(new LatLng(45.5, -73.6))
@@ -44,7 +62,6 @@ GoogleMap.OnMapLongClickListener{
 
     public static final LatLng MONTREAL_LL = new LatLng(45.5, -73.6);
 
-    private LongPressLocationSource longPressLocationSource;
 
     /**Methods */
     @Override
@@ -55,12 +72,13 @@ GoogleMap.OnMapLongClickListener{
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
 
-        longPressLocationSource = new LongPressLocationSource();
-
+        /*googleApiClient = new GoogleApiClient.Builder(getApplicationContext())
+        .addApi(LocationServices.API)
+        .addConnectionCallbacks(googleApiClient)
+        .addOnConnectionFailedListener(this)
+        .build();*/
 
         mapFragment.getMapAsync(this);
-
-
     }
 
     @Override
@@ -72,13 +90,14 @@ GoogleMap.OnMapLongClickListener{
         mUiSettings.setZoomControlsEnabled(true);
 
         startPermission();
-        mMap.setMyLocationEnabled(true);
+        mMap.setMyLocationEnabled(true); //will stay underlined red
+
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(LatLng latLng) {
                 Toast.makeText(getApplicationContext(),
                         "Clicked " + latLng.toString(),
-                        Toast.LENGTH_SHORT).show();
+                        Toast.LENGTH_LONG).show();
             }
         });
 
@@ -104,11 +123,14 @@ GoogleMap.OnMapLongClickListener{
                 .strokeColor(Color.BLACK)
                 .fillColor(0x00000000));
 
+        
+        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        String provider = locationManager.getBestProvider(new Criteria(), true);
 
-        // Add a marker in Sydney and move the camera
-        /*LatLng montreal = new LatLng(45.5, -73.6);
-        mMap.addMarker(new MarkerOptions().position(montreal).title("Marker in Montreal"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(montreal));*/
+        Location location = locationManager.getLastKnownLocation(provider);
+        if(location!= null){
+            onLocationChanged(location);
+        }
 
         mMap.addMarker(new MarkerOptions().position(MONTREAL_LL).title("Marker in Montreal"));
 
@@ -134,56 +156,6 @@ GoogleMap.OnMapLongClickListener{
 
     }
 
-    /**
-     * A {@link LocationSource} which reports a new location whenever a user long presses the map
-     * at
-     * the point at which a user long pressed the map.
-     */
-    private static class LongPressLocationSource implements LocationSource, GoogleMap.OnMapLongClickListener {
-
-        private OnLocationChangedListener mListener;
-
-        /**
-         * Flag to keep track of the activity's lifecycle. This is not strictly necessary in this
-         * case because onMapLongPress events don't occur while the activity containing the map is
-         * paused but is included to demonstrate best practices (e.g., if a background service were
-         * to be used).
-         */
-        private boolean mPaused;
-
-        @Override
-        public void activate(OnLocationChangedListener listener) {
-            mListener = listener;
-        }
-
-        @Override
-        public void deactivate() {
-            mListener = null;
-        }
-
-        @Override
-        public void onMapLongClick(LatLng point) {
-            if (mListener != null && !mPaused) {
-                Location location = new Location("LongPressLocationProvider");
-                location.setLatitude(point.latitude);
-                location.setLongitude(point.longitude);
-                location.setAccuracy(50);
-                mListener.onLocationChanged(location);
-            }
-        }
-
-        public void onPause() {
-            mPaused = true;
-        }
-
-        public void onResume() {
-            mPaused = false;
-        }
-    }
-    /**
-     * Change the camera position by moving or animating the camera depending on the state of the
-     * animate toggle button.
-     */
     private void changeCamera(CameraUpdate update, CancelableCallback callback) {
         mMap.animateCamera(update);
     }
@@ -227,5 +199,10 @@ GoogleMap.OnMapLongClickListener{
             // other 'case' lines to check for other
             // permissions this app might request
         }
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+        Toast.makeText(getApplicationContext(), "Location Changed", Toast.LENGTH_SHORT).show();
     }
 }
