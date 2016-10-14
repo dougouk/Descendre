@@ -97,7 +97,6 @@ GoogleMap.OnMapLongClickListener,
 
         startPermission();
         mMap.setMyLocationEnabled(true); //will stay underlined red
-
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(LatLng latLng) {
