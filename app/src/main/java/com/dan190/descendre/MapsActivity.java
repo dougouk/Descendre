@@ -1,6 +1,5 @@
 package com.dan190.descendre;
 
-import android.*;
 import android.Manifest;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -11,26 +10,24 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
-import android.support.v4.content.ContextCompat;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.Api;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.PendingResult;
-import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.FusedLocationProviderApi;
 import com.google.android.gms.location.LocationListener;
+import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.CancelableCallback;
-import com.google.android.gms.maps.LocationSource;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.UiSettings;
@@ -38,26 +35,33 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.tagmanager.TagManager;
 
-import java.io.FileDescriptor;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,
+GoogleApiClient.ConnectionCallbacks,
+    GoogleApiClient.OnConnectionFailedListener,
         GoogleMap.OnMapClickListener,
-GoogleMap.OnMapLongClickListener,
+        GoogleMap.OnMapLongClickListener,
         LocationListener{
 
     /**Members */
     private GoogleMap mMap;
     private UiSettings mUiSettings;
     private Circle circle;
-    private GoogleApiClient googleApiClient;
     private LocationManager locationManager;
+    private EditText locationSearch;
+    private String location;
+    private Button searchButton;
+    private FusedLocationProviderApi fusedLocationProviderApi = LocationServices.FusedLocationApi;
+    private GoogleApiClient mGoogleAPIClient;
+    private LocationRequest locationRequest;
+    private Marker chosenDestination;
+
+
 
     public static final CameraPosition MONTREAL =
             new CameraPosition.Builder().target(new LatLng(45.5, -73.6))
@@ -78,13 +82,20 @@ GoogleMap.OnMapLongClickListener,
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
 
-        /*googleApiClient = new GoogleApiClient.Builder(getApplicationContext())
+        mGoogleAPIClient = new GoogleApiClient.Builder(getApplicationContext())
         .addApi(LocationServices.API)
-        .addConnectionCallbacks(googleApiClient)
+        .addConnectionCallbacks(this)
         .addOnConnectionFailedListener(this)
-        .build();*/
-
+        .build();
+        createLocationRequest();
         mapFragment.getMapAsync(this);
+    }
+
+    private void createLocationRequest() {
+        locationRequest = new LocationRequest();
+        locationRequest.setInterval(10000);
+        locationRequest.setFastestInterval(5000);
+        locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
     }
 
     @Override
@@ -115,7 +126,7 @@ GoogleMap.OnMapLongClickListener,
                         .radius(200)
                         .strokeColor(Color.BLACK)
                         .fillColor(0x00000000));
-                mMap.addMarker(new MarkerOptions().position(latLng).title("Picked"));
+                chosenDestination = mMap.addMarker(new MarkerOptions().position(latLng).title("Picked"));
 
             }
         });
@@ -209,12 +220,13 @@ GoogleMap.OnMapLongClickListener,
     @Override
     public void onLocationChanged(Location location) {
         Toast.makeText(getApplicationContext(), "Location Changed", Toast.LENGTH_SHORT).show();
+        checkBoundary(location);
     }
 
     public void onMapSearch(View v){
-        EditText locationSearch = (EditText) findViewById(R.id.search_bar);
-        String location = locationSearch.getText().toString();
-        Button searchButton = (Button) findViewById(R.id.search_button);
+        locationSearch = (EditText) findViewById(R.id.search_bar);
+        location = locationSearch.getText().toString();
+        searchButton = (Button) findViewById(R.id.search_button);
 
         List<Address> addressList = null;
         if(location != null || !location.equals("")){
@@ -228,7 +240,7 @@ GoogleMap.OnMapLongClickListener,
             Address address = addressList.get(0);
             LatLng latLng = new LatLng(address.getLatitude(), address.getLongitude());
             mMap.clear();
-            mMap.addMarker(new MarkerOptions().position(latLng).title("Searched"));
+            chosenDestination = mMap.addMarker(new MarkerOptions().position(latLng).title("Searched"));
             circle = mMap.addCircle(new CircleOptions()
                     .center(latLng)
                     .radius(200)
@@ -238,4 +250,53 @@ GoogleMap.OnMapLongClickListener,
 
         }
     }
+
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+        startLocationUpdates();
+    }
+
+    private void startLocationUpdates() {
+        LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleAPIClient, locationRequest, this);
+    }
+
+    private void stopLocationUpdates() {
+        LocationServices.FusedLocationApi.removeLocationUpdates(
+                mGoogleAPIClient, this);
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+
+    }
+
+    @Override
+    public void onStart(){
+        super.onStart();
+        mGoogleAPIClient.connect();
+    }
+
+    @Override
+    public void onStop(){
+        super.onStop();
+        mGoogleAPIClient.disconnect();
+    }
+
+    float[] distance ;
+    private void checkBoundary(Location updatedLocation){
+        distance = new float[2];
+        Location.distanceBetween(updatedLocation.getLatitude(), updatedLocation.getLongitude(),
+                circle.getCenter().latitude, circle.getCenter().longitude, distance);
+        if(distance[0] > circle.getRadius()){
+            //do nothing
+        }else{
+            Toast.makeText(getApplicationContext(), "INSIDE CIRCLE", Toast.LENGTH_SHORT).show();
+        }
+    }
+
 }
