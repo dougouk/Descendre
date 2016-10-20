@@ -2,7 +2,9 @@ package com.dan190.descendre;
 
 import android.Manifest;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Address;
@@ -26,7 +28,11 @@ import android.widget.Toast;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.Result;
+import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.location.FusedLocationProviderApi;
+import com.google.android.gms.location.Geofence;
+import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
@@ -45,6 +51,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,
@@ -52,7 +59,8 @@ GoogleApiClient.ConnectionCallbacks,
     GoogleApiClient.OnConnectionFailedListener,
         GoogleMap.OnMapClickListener,
         GoogleMap.OnMapLongClickListener,
-        LocationListener{
+        LocationListener,
+        ResultCallback{
 
     /**Members */
     private GoogleMap mMap;
@@ -68,7 +76,8 @@ GoogleApiClient.ConnectionCallbacks,
     private Marker chosenDestination;
     private Vibrator vibrator;
     private boolean insideCircle;
-
+    private List<Geofence> mGeofenceList;
+private PendingIntent mGeofencePendingIntent;
 
 
     public static final CameraPosition MONTREAL =
@@ -85,7 +94,6 @@ GoogleApiClient.ConnectionCallbacks,
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if(!isGooglePlayServicesAvailable())finish();
         vibrator = (Vibrator) this.getApplicationContext().getSystemService(Context.VIBRATOR_SERVICE);
         setContentView(R.layout.activity_maps);
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -98,7 +106,11 @@ GoogleApiClient.ConnectionCallbacks,
         .addOnConnectionFailedListener(this)
         .build();
         createLocationRequest();
+
+        mGeofenceList = new ArrayList<Geofence>();
         mapFragment.getMapAsync(this);
+        //if(!isGooglePlayServicesAvailable())finish();
+
     }
 
     private void createLocationRequest() {
@@ -130,14 +142,8 @@ GoogleApiClient.ConnectionCallbacks,
         mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
             @Override
             public void onMapLongClick(LatLng latLng) {
-                mMap.clear();
-                circle = mMap.addCircle(new CircleOptions()
-                        .center(latLng)
-                        .radius(200)
-                        .strokeColor(Color.BLACK)
-                        .fillColor(0x00000000));
-                chosenDestination = mMap.addMarker(new MarkerOptions().position(latLng).title("Picked"));
-
+//                createDestinationMarker(latLng);
+                addGeofence(latLng);
             }
         });
 
@@ -163,6 +169,59 @@ GoogleApiClient.ConnectionCallbacks,
         mMap.addMarker(new MarkerOptions().position(MONTREAL_LL).title("Marker in Montreal"));
 
         changeCamera(CameraUpdateFactory.newCameraPosition(MONTREAL));
+    }
+
+
+    private void addGeofence(LatLng latlng){
+        mGeofenceList.add(new Geofence.Builder()
+            // Set the request ID of the geofence. This is a string to identify this
+            // geofence.
+        .setRequestId(String.format("%d_%d", latlng.latitude, latlng.longitude))
+        .setCircularRegion(
+                latlng.latitude,
+                latlng.longitude,
+                100
+        )
+        .setExpirationDuration(3000)
+        .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)
+        .build());
+        Toast.makeText(getApplicationContext(), "Added geofence", Toast.LENGTH_SHORT).show();
+    }
+    private void createDestinationMarker(LatLng latLng) {
+        mMap.clear();
+        circle = mMap.addCircle(new CircleOptions()
+                .center(latLng)
+                .radius(200)
+                .strokeColor(Color.BLACK)
+                .fillColor(0x00000000));
+        chosenDestination = mMap.addMarker(new MarkerOptions().position(latLng).title("Picked"));
+    }
+
+    private GeofencingRequest getGeofencingRequest() {
+        GeofencingRequest.Builder builder = new GeofencingRequest.Builder();
+        builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER);
+        builder.addGeofences(mGeofenceList);
+        return builder.build();
+    }
+
+    public void AddGeofences(View v){
+        LocationServices.GeofencingApi.addGeofences(
+                mGoogleAPIClient,
+                getGeofencingRequest(),
+                getGeofencePendingIntent()
+        ).setResultCallback(this);
+        Toast.makeText(getApplicationContext(), "Geofences added to Google Client",Toast.LENGTH_SHORT).show();
+    }
+    private PendingIntent getGeofencePendingIntent(){
+        // Reuse the PendingIntent if we already have it.
+        if (mGeofencePendingIntent != null) {
+            return mGeofencePendingIntent;
+        }
+        Intent intent = new Intent(this, GeofenceTransitionsIntentService.class);
+        // We use FLAG_UPDATE_CURRENT so that we get the same pending intent back when
+        // calling addGeofences() and removeGeofences().
+        return PendingIntent.getService(this, 0, intent, PendingIntent.
+                FLAG_UPDATE_CURRENT);
     }
 
 
@@ -294,6 +353,18 @@ GoogleApiClient.ConnectionCallbacks,
     }
 
     @Override
+    public void onPause(){
+        super.onPause();
+        //stopLocationUpdates();
+        Toast.makeText(getApplicationContext(), "Stopping location updates", Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onResume(){
+        super.onResume();
+        if(mGoogleAPIClient.isConnected()) startLocationUpdates();
+    }
+    @Override
     public void onStop(){
         super.onStop();
         mGoogleAPIClient.disconnect();
@@ -336,4 +407,8 @@ GoogleApiClient.ConnectionCallbacks,
         notificationManager.notify(001, mBuilder.build());
     }
 
+    @Override
+    public void onResult(@NonNull Result result) {
+
+    }
 }
