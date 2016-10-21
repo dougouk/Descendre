@@ -19,14 +19,13 @@ import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.NotificationManagerCompat;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.Result;
 import com.google.android.gms.common.api.ResultCallback;
@@ -68,7 +67,7 @@ GoogleApiClient.ConnectionCallbacks,
     private Circle circle;
     private LocationManager locationManager;
     private EditText locationSearch;
-    private String location;
+    private String locationString;
     private Button searchButton;
     private FusedLocationProviderApi fusedLocationProviderApi = LocationServices.FusedLocationApi;
     private GoogleApiClient mGoogleAPIClient;
@@ -77,8 +76,11 @@ GoogleApiClient.ConnectionCallbacks,
     private Vibrator vibrator;
     private boolean insideCircle;
     private List<Geofence> mGeofenceList;
-private PendingIntent mGeofencePendingIntent;
+    Location locationLocation;
+    private PendingIntent mGeofencePendingIntent;
+    private boolean areGeofencesAdded;
 
+    private static final String ACTIVITY_NAME = "MapsActivity";
 
     public static final CameraPosition MONTREAL =
             new CameraPosition.Builder().target(new LatLng(45.495, -73.58))
@@ -143,7 +145,7 @@ private PendingIntent mGeofencePendingIntent;
             @Override
             public void onMapLongClick(LatLng latLng) {
 //                createDestinationMarker(latLng);
-                addGeofence(latLng);
+                addGeofenceOnLongClick(latLng);
             }
         });
 
@@ -158,12 +160,17 @@ private PendingIntent mGeofencePendingIntent;
 
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         String provider = locationManager.getBestProvider(new Criteria(), true);
+        try{
+            locationLocation = locationManager.getLastKnownLocation(provider);
 
-        Location location = locationManager.getLastKnownLocation(provider);
-        if(location!= null){
+        }catch (SecurityException e){
+            Log.e(ACTIVITY_NAME, e.getMessage());
+        }
+
+        if(locationLocation!= null){
             changeCamera(CameraUpdateFactory.newCameraPosition(CameraPosition.fromLatLngZoom(
-                                    new LatLng(location.getLatitude(), location.getLongitude()), 15)));
-            onLocationChanged(location);
+                                    new LatLng(locationLocation.getLatitude(), locationLocation.getLongitude()), 15)));
+            onLocationChanged(locationLocation);
         }
 
         mMap.addMarker(new MarkerOptions().position(MONTREAL_LL).title("Marker in Montreal"));
@@ -172,20 +179,23 @@ private PendingIntent mGeofencePendingIntent;
     }
 
 
-    private void addGeofence(LatLng latlng){
+    private void addGeofenceOnLongClick(LatLng latlng){
         mGeofenceList.add(new Geofence.Builder()
             // Set the request ID of the geofence. This is a string to identify this
             // geofence.
-        .setRequestId(String.format("%d_%d", latlng.latitude, latlng.longitude))
+        .setRequestId(String.format("fd_%f", latlng.latitude, latlng.longitude))
         .setCircularRegion(
                 latlng.latitude,
                 latlng.longitude,
                 100
         )
-        .setExpirationDuration(3000)
-        .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER)
+        .setExpirationDuration(1000 * 60 * 60) //1 hour
+        .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER |
+                            Geofence.GEOFENCE_TRANSITION_EXIT)
         .build());
-        Toast.makeText(getApplicationContext(), "Added geofence", Toast.LENGTH_SHORT).show();
+//        Toast.makeText(getApplicationContext(), "Added geofence", Toast.LENGTH_SHORT).show();
+        Log.d(ACTIVITY_NAME, "Added Geofence");
+        createDestinationMarker(latlng);
     }
     private void createDestinationMarker(LatLng latLng) {
         mMap.clear();
@@ -205,16 +215,26 @@ private PendingIntent mGeofencePendingIntent;
     }
 
     public void AddGeofences(View v){
-        LocationServices.GeofencingApi.addGeofences(
-                mGoogleAPIClient,
-                getGeofencingRequest(),
-                getGeofencePendingIntent()
-        ).setResultCallback(this);
-        Toast.makeText(getApplicationContext(), "Geofences added to Google Client",Toast.LENGTH_SHORT).show();
+        Log.d(ACTIVITY_NAME, String.format("Geofence list size : %d", mGeofenceList.size()));
+        try{
+            LocationServices.GeofencingApi.addGeofences(
+                    mGoogleAPIClient,
+                    getGeofencingRequest(),
+                    getGeofencePendingIntent()
+            ).setResultCallback(this);
+        }catch (SecurityException securityException) {
+            // Catch exception generated if the app does not use ACCESS_FINE_LOCATION permission.
+            Log.e(ACTIVITY_NAME, "Need FINE_ACCESS_LOCATION permission");
+//            logSecurityException(securityException);
+        }
+//        Toast.makeText(getApplicationContext(), "Geofences added to Google Client",Toast.LENGTH_SHORT).show();
+        Log.d(ACTIVITY_NAME, "Geofences added to Google Client");
     }
     private PendingIntent getGeofencePendingIntent(){
         // Reuse the PendingIntent if we already have it.
         if (mGeofencePendingIntent != null) {
+            Log.d(ACTIVITY_NAME, "pendingIntent already exists");
+
             return mGeofencePendingIntent;
         }
         Intent intent = new Intent(this, GeofenceTransitionsIntentService.class);
@@ -290,20 +310,22 @@ private PendingIntent mGeofencePendingIntent;
 
     @Override
     public void onLocationChanged(Location location) {
-        Toast.makeText(getApplicationContext(), "Location Changed", Toast.LENGTH_SHORT).show();
+        Log.d(ACTIVITY_NAME, "Location Changed");
+
+//        Toast.makeText(getApplicationContext(), "Location Changed", Toast.LENGTH_SHORT).show();
         checkBoundary(location);
     }
 
     public void onMapSearch(View v){
         locationSearch = (EditText) findViewById(R.id.search_bar);
-        location = locationSearch.getText().toString();
+        locationString = locationSearch.getText().toString();
         searchButton = (Button) findViewById(R.id.search_button);
 
         List<Address> addressList = null;
-        if(location != null || !location.equals("")){
+        if(locationString != null || !locationString.equals("")){
             Geocoder geocoder = new Geocoder(this);
             try{
-                addressList = geocoder.getFromLocationName(location,1);
+                addressList = geocoder.getFromLocationName(locationString,1);
             }catch(IOException e){
                 e.printStackTrace();
             }
@@ -328,7 +350,11 @@ private PendingIntent mGeofencePendingIntent;
     }
 
     private void startLocationUpdates() {
-        LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleAPIClient, locationRequest, this);
+        try{
+            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleAPIClient, locationRequest, this);
+        }catch(SecurityException e){
+            Log.e(ACTIVITY_NAME, e.getMessage());
+        }
     }
 
     private void stopLocationUpdates() {
@@ -350,35 +376,35 @@ private PendingIntent mGeofencePendingIntent;
     public void onStart(){
         super.onStart();
         mGoogleAPIClient.connect();
+        Log.d(ACTIVITY_NAME, "onStart()");
+
     }
 
     @Override
     public void onPause(){
         super.onPause();
         //stopLocationUpdates();
-        Toast.makeText(getApplicationContext(), "Stopping location updates", Toast.LENGTH_SHORT).show();
+//        Toast.makeText(getApplicationContext(), "onPause()", Toast.LENGTH_SHORT).show();
+        Log.d(ACTIVITY_NAME, "onPause()");
     }
 
     @Override
     public void onResume(){
         super.onResume();
         if(mGoogleAPIClient.isConnected()) startLocationUpdates();
+        Log.d(ACTIVITY_NAME, "onResume()");
     }
     @Override
     public void onStop(){
         super.onStop();
+        LocationServices.GeofencingApi.removeGeofences(
+                mGoogleAPIClient,
+                getGeofencePendingIntent()
+        ).setResultCallback(this);
         mGoogleAPIClient.disconnect();
     }
 
-    private boolean isGooglePlayServicesAvailable() {
-        int status = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
-        if (ConnectionResult.SUCCESS == status) {
-            return true;
-        } else {
-            GooglePlayServicesUtil.getErrorDialog(status, this, 0).show();
-            return false;
-        }
-    }
+
     float[] distance ;
     private void checkBoundary(Location updatedLocation){
         distance = new float[2];
@@ -407,8 +433,18 @@ private PendingIntent mGeofencePendingIntent;
         notificationManager.notify(001, mBuilder.build());
     }
 
+
     @Override
     public void onResult(@NonNull Result result) {
+        if(result.getStatus().isSuccess()){
+//            areGeofencesAdded = !areGeofencesAdded;
+            Log.d(ACTIVITY_NAME, "Geofences successfully added");
+        }else
+        {
+            String message = result.getStatus().toString();
+            Log.d(ACTIVITY_NAME, "Geofences not added successfully");
+            Log.d(ACTIVITY_NAME, message);
 
+        }
     }
 }

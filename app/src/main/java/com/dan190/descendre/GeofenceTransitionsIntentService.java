@@ -26,11 +26,14 @@ import static android.content.ContentValues.TAG;
 
 public class GeofenceTransitionsIntentService extends IntentService {
 
+    private final static String ACTIVTY_NAME = "GeofenceIntentService";
+
     public GeofenceTransitionsIntentService() {
         super("GeofenceTransitionIntentServices");
     }
     @Override
     protected void onHandleIntent(Intent intent) {
+        Log.d(ACTIVTY_NAME, "onHandleIntent()");
         GeofencingEvent geofencingEvent = GeofencingEvent.fromIntent(intent);
         if (geofencingEvent.hasError()) {
             /*String errorMessage = GeofenceErrorMessages.getErrorString(this,
