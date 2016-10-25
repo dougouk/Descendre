@@ -26,6 +26,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.SignInButton;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.Result;
 import com.google.android.gms.common.api.ResultCallback;
@@ -68,7 +69,7 @@ GoogleApiClient.ConnectionCallbacks,
     private LocationManager locationManager;
     private EditText locationSearch;
     private String locationString;
-    private Button searchButton;
+    private Button searchButton, setAlarmButton;
     private FusedLocationProviderApi fusedLocationProviderApi = LocationServices.FusedLocationApi;
     private GoogleApiClient mGoogleAPIClient;
     private LocationRequest locationRequest;
@@ -109,6 +110,15 @@ GoogleApiClient.ConnectionCallbacks,
         .build();
         createLocationRequest();
 
+        setAlarmButton = (Button) findViewById(R.id.SetAlarm_button);
+        setAlarmButton.setVisibility(View.INVISIBLE);
+        setAlarmButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                AddGeofenceAtLocation(v);
+                Log.d(ACTIVITY_NAME, "Button clicked, AddGeofenceAtLocation(v) called");
+            }
+        });
         mGeofenceList = new ArrayList<Geofence>();
         mapFragment.getMapAsync(this);
         //if(!isGooglePlayServicesAvailable())finish();
@@ -131,21 +141,28 @@ GoogleApiClient.ConnectionCallbacks,
         mUiSettings.setZoomControlsEnabled(true);
 
         startPermission();
-        mMap.setMyLocationEnabled(true); //will stay underlined red
+        try {
+            mMap.setMyLocationEnabled(true);
+        }catch(SecurityException e){
+            Log.e(ACTIVITY_NAME, e.getMessage());
+        }
+
+
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
             @Override
             public void onMapClick(LatLng latLng) {
-                Toast.makeText(getApplicationContext(),
-                        "Clicked " + latLng.toString(),
-                        Toast.LENGTH_LONG).show();
+                Log.d(ACTIVITY_NAME, "map Clicked");
+                clearMap();
             }
         });
 
         mMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
             @Override
             public void onMapLongClick(LatLng latLng) {
-//                createDestinationMarker(latLng);
-                addGeofenceOnLongClick(latLng);
+                createDestinationMarker(latLng);
+                setAlarmButton.setVisibility(View.VISIBLE);
+
+//                addGeofence(latLng);
             }
         });
 
@@ -162,7 +179,6 @@ GoogleApiClient.ConnectionCallbacks,
         String provider = locationManager.getBestProvider(new Criteria(), true);
         try{
             locationLocation = locationManager.getLastKnownLocation(provider);
-
         }catch (SecurityException e){
             Log.e(ACTIVITY_NAME, e.getMessage());
         }
@@ -178,8 +194,12 @@ GoogleApiClient.ConnectionCallbacks,
         changeCamera(CameraUpdateFactory.newCameraPosition(MONTREAL));
     }
 
+    private void clearMap(){
+        mMap.clear();
+        setAlarmButton.setVisibility(View.INVISIBLE);
+    }
 
-    private void addGeofenceOnLongClick(LatLng latlng){
+    private void addGeofence(LatLng latlng){
         mGeofenceList.add(new Geofence.Builder()
             // Set the request ID of the geofence. This is a string to identify this
             // geofence.
@@ -187,7 +207,7 @@ GoogleApiClient.ConnectionCallbacks,
         .setCircularRegion(
                 latlng.latitude,
                 latlng.longitude,
-                100
+                200
         )
         .setExpirationDuration(1000 * 60 * 60) //1 hour
         .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER |
@@ -214,7 +234,16 @@ GoogleApiClient.ConnectionCallbacks,
         return builder.build();
     }
 
-    public void AddGeofences(View v){
+    public void AddGeofenceAtLocation(View v){
+        if(circle.getCenter() == null){
+            Log.e(ACTIVITY_NAME, "Circle.getCenter() is null");
+            return;
+        }
+        addGeofence(circle.getCenter());
+        Log.d(ACTIVITY_NAME, "calling addGeofence(circle.getCenter())");
+    }
+
+    public void SendGeofence(View v){
         Log.d(ACTIVITY_NAME, String.format("Geofence list size : %d", mGeofenceList.size()));
         try{
             LocationServices.GeofencingApi.addGeofences(
@@ -254,9 +283,7 @@ GoogleApiClient.ConnectionCallbacks,
     }
 
     @Override
-    public void onMapLongClick(LatLng latLng) {
-
-    }
+    public void onMapLongClick(LatLng latLng) {}
 
     @Override
     public void onMapClick(LatLng latLng) {
@@ -313,7 +340,7 @@ GoogleApiClient.ConnectionCallbacks,
         Log.d(ACTIVITY_NAME, "Location Changed");
 
 //        Toast.makeText(getApplicationContext(), "Location Changed", Toast.LENGTH_SHORT).show();
-        checkBoundary(location);
+        //checkBoundary(location);
     }
 
     public void onMapSearch(View v){

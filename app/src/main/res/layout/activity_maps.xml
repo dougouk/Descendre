@@ -22,17 +22,39 @@
             android:text="@string/search_button" />
 
     </LinearLayout>
-    <Button
+    <LinearLayout
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Add Geofences"
-        android:onClick="AddGeofences"/>
+        android:layout_height="wrap_content">
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Add Geofences"
+            android:onClick="AddGeofenceAtLocation"/>
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Send Geofences"
+            android:onClick="SendGeofence"/>
+    </LinearLayout>
+<FrameLayout
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
     <fragment
         android:id="@+id/map"
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         tools:context="com.dan190.descendre.MapsActivity" />
+    <Button
+        android:id="@+id/SetAlarm_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:text="Set alarm at location"/>
+
+</FrameLayout>
+
 </LinearLayout>
 
 
