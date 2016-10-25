@@ -77,6 +77,7 @@ GoogleApiClient.ConnectionCallbacks,
     private Vibrator vibrator;
     private boolean insideCircle;
     private List<Geofence> mGeofenceList;
+    private List<Circle> listOfDestinations_circles;
     Location locationLocation;
     private PendingIntent mGeofencePendingIntent;
     private boolean areGeofencesAdded;
@@ -117,9 +118,13 @@ GoogleApiClient.ConnectionCallbacks,
             public void onClick(View v) {
                 AddGeofenceAtLocation(v);
                 Log.d(ACTIVITY_NAME, "Button clicked, AddGeofenceAtLocation(v) called");
+                SendGeofence(v);
+                Log.d(ACTIVITY_NAME, "SendingGeofence from ButtonClick");
+
             }
         });
         mGeofenceList = new ArrayList<Geofence>();
+        listOfDestinations_circles = new ArrayList<>();
         mapFragment.getMapAsync(this);
         //if(!isGooglePlayServicesAvailable())finish();
 
@@ -189,7 +194,7 @@ GoogleApiClient.ConnectionCallbacks,
             onLocationChanged(locationLocation);
         }
 
-        mMap.addMarker(new MarkerOptions().position(MONTREAL_LL).title("Marker in Montreal"));
+        chosenDestination = mMap.addMarker(new MarkerOptions().position(MONTREAL_LL).title("Marker in Montreal"));
 
         changeCamera(CameraUpdateFactory.newCameraPosition(MONTREAL));
     }
@@ -198,6 +203,53 @@ GoogleApiClient.ConnectionCallbacks,
         mMap.clear();
         setAlarmButton.setVisibility(View.INVISIBLE);
     }
+
+    private void clearRedundant(){
+        if(circle != null) {
+            circle.remove();
+            Log.d(ACTIVITY_NAME, "removed circle");
+        }
+        if(chosenDestination != null) {
+            chosenDestination.remove();
+            Log.d(ACTIVITY_NAME, "removed circle");
+        }
+
+        if(setAlarmButton.getVisibility() == View.VISIBLE)
+        {
+            setAlarmButton.setVisibility(View.INVISIBLE);
+            Log.d(ACTIVITY_NAME, "removed circle");
+        }
+    }
+    private void createDestinationMarker(LatLng latLng) {
+        clearRedundant();
+        circle = mMap.addCircle(new CircleOptions()
+                .center(latLng)
+                .radius(200)
+                .strokeColor(Color.BLACK)
+                .fillColor(0x00000000));
+        chosenDestination = mMap.addMarker(new MarkerOptions().position(latLng).title("Picked"));
+    }
+
+    public void AddGeofenceAtLocation(View v){
+        if(circle.getCenter() == null){
+            Log.e(ACTIVITY_NAME, "Circle.getCenter() is null");
+            return;
+        }
+        addGeofence(circle.getCenter());
+
+        Log.d(ACTIVITY_NAME, "calling addGeofence(circle.getCenter())");
+    }
+
+    private void addCircleToList(LatLng latLng){
+        Circle newCircle = mMap.addCircle(new CircleOptions()
+                .center(latLng)
+                .radius(250)
+                .strokeColor(Color.GREEN)
+                .fillColor(0x30CCCCFF));
+        listOfDestinations_circles.add(newCircle);
+        Log.d(ACTIVITY_NAME, "Added new circle to listOfDestinations");
+    }
+
 
     private void addGeofence(LatLng latlng){
         mGeofenceList.add(new Geofence.Builder()
@@ -215,32 +267,16 @@ GoogleApiClient.ConnectionCallbacks,
         .build());
 //        Toast.makeText(getApplicationContext(), "Added geofence", Toast.LENGTH_SHORT).show();
         Log.d(ACTIVITY_NAME, "Added Geofence");
-        createDestinationMarker(latlng);
+        //createDestinationMarker(latlng);
+        addCircleToList(latlng);
     }
-    private void createDestinationMarker(LatLng latLng) {
-        mMap.clear();
-        circle = mMap.addCircle(new CircleOptions()
-                .center(latLng)
-                .radius(200)
-                .strokeColor(Color.BLACK)
-                .fillColor(0x00000000));
-        chosenDestination = mMap.addMarker(new MarkerOptions().position(latLng).title("Picked"));
-    }
+
 
     private GeofencingRequest getGeofencingRequest() {
         GeofencingRequest.Builder builder = new GeofencingRequest.Builder();
         builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER);
         builder.addGeofences(mGeofenceList);
         return builder.build();
-    }
-
-    public void AddGeofenceAtLocation(View v){
-        if(circle.getCenter() == null){
-            Log.e(ACTIVITY_NAME, "Circle.getCenter() is null");
-            return;
-        }
-        addGeofence(circle.getCenter());
-        Log.d(ACTIVITY_NAME, "calling addGeofence(circle.getCenter())");
     }
 
     public void SendGeofence(View v){
@@ -271,11 +307,6 @@ GoogleApiClient.ConnectionCallbacks,
         // calling addGeofences() and removeGeofences().
         return PendingIntent.getService(this, 0, intent, PendingIntent.
                 FLAG_UPDATE_CURRENT);
-    }
-
-
-    public void onGoToMontreal(View v){
-        mMap.animateCamera(CameraUpdateFactory.newCameraPosition(MONTREAL), 1000, null);
     }
 
     private void changeCamera(CameraUpdate update) {
@@ -359,7 +390,9 @@ GoogleApiClient.ConnectionCallbacks,
 
             Address address = addressList.get(0);
             LatLng latLng = new LatLng(address.getLatitude(), address.getLongitude());
-            mMap.clear();
+            //mMap.clear();
+            //instead of clearing the whole map, clear the previous circle
+            clearRedundant();
             chosenDestination = mMap.addMarker(new MarkerOptions().position(latLng).title("Searched"));
             circle = mMap.addCircle(new CircleOptions()
                     .center(latLng)
