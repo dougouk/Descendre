@@ -460,7 +460,9 @@ GoogleApiClient.ConnectionCallbacks,
     @Override
     public void onStart(){
         super.onStart();
-        mGoogleAPIClient.connect();
+        if(!mGoogleAPIClient.isConnected()){
+            mGoogleAPIClient.connect();
+        }
         Log.d(ACTIVITY_NAME, "onStart()");
 
     }
@@ -482,11 +484,12 @@ GoogleApiClient.ConnectionCallbacks,
     @Override
     public void onStop(){
         super.onStop();
-        LocationServices.GeofencingApi.removeGeofences(
+  /*      LocationServices.GeofencingApi.removeGeofences(
                 mGoogleAPIClient,
                 getGeofencePendingIntent()
         ).setResultCallback(this);
-        mGoogleAPIClient.disconnect();
+        mGoogleAPIClient.disconnect();*/
+        Log.d(ACTIVITY_NAME, "onStop()");
     }
 
 
