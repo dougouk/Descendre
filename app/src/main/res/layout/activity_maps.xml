@@ -54,6 +54,12 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:text="Set alarm at location"/>
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/deleteMarker_button"
+        android:layout_gravity="bottom"
+        android:text="Delete selected point"/>
 
 </FrameLayout>
 
