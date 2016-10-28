@@ -20,6 +20,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -114,6 +115,20 @@ GoogleApiClient.ConnectionCallbacks,
         .addOnConnectionFailedListener(this)
         .build();
         createLocationRequest();
+
+        locationSearch = (EditText) findViewById(R.id.search_bar);
+        locationSearch.setOnKeyListener(new View.OnKeyListener() {
+            @Override
+            public boolean onKey(View v, int keyCode, KeyEvent event) {
+                Log.d(ACTIVITY_NAME, "onKey()");
+                if((event.getAction() == KeyEvent.ACTION_DOWN) &&
+                (keyCode == KeyEvent.KEYCODE_ENTER)){
+                    onMapSearch(v);
+                    return true;
+                }
+                return false;
+            }
+        });
 
         setAlarmButton = (Button) findViewById(R.id.SetAlarm_button);
         setAlarmButton.setVisibility(View.INVISIBLE);
@@ -412,7 +427,6 @@ GoogleApiClient.ConnectionCallbacks,
     }
 
     public void onMapSearch(View v){
-        locationSearch = (EditText) findViewById(R.id.search_bar);
         locationString = locationSearch.getText().toString();
         searchButton = (Button) findViewById(R.id.search_button);
 
