@@ -70,8 +70,8 @@ GoogleApiClient.ConnectionCallbacks,
     private Circle circle, currentlySelectedCircle;
     private LocationManager locationManager;
     private EditText locationSearch;
-    private String locationString;
-    private Button searchButton, setAlarmButton, deleteMarkerButton;
+    private String locationString, provider;
+    private Button searchButton, setAlarmButton, deleteMarkerButton, setMarkerAsDestinationButton;
     private FusedLocationProviderApi fusedLocationProviderApi = LocationServices.FusedLocationApi;
     private GoogleApiClient mGoogleAPIClient;
     private LocationRequest locationRequest;
@@ -128,6 +128,16 @@ GoogleApiClient.ConnectionCallbacks,
             }
         });
 
+        setMarkerAsDestinationButton = (Button) findViewById(R.id.makeGeofenceAtMarker_button);
+        setMarkerAsDestinationButton.setVisibility(View.INVISIBLE);
+        setMarkerAsDestinationButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.d(ACTIVITY_NAME, "setMarkerAsDestinationButton clicked");
+                AddGeofenceAtLocation(v);
+                SendGeofence(v);
+            }
+        });
         deleteMarkerButton = (Button) findViewById(R.id.deleteMarker_button);
         deleteMarkerButton.setVisibility(View.INVISIBLE);
         deleteMarkerButton.setOnClickListener(new View.OnClickListener() {
@@ -189,30 +199,28 @@ GoogleApiClient.ConnectionCallbacks,
         mMap.setOnMarkerClickListener(this);
         mUiSettings.setMapToolbarEnabled(true);
 
-        circle = mMap.addCircle(new CircleOptions()
+        /*circle = mMap.addCircle(new CircleOptions()
                 .center(MONTREAL_LL)
                 .radius(200)
                 .strokeColor(Color.BLACK)
-                .fillColor(0x00000000));
+                .fillColor(0x00000000));*/
 
 
-        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-        String provider = locationManager.getBestProvider(new Criteria(), true);
-        try{
-            locationLocation = locationManager.getLastKnownLocation(provider);
-        }catch (SecurityException e){
-            Log.e(ACTIVITY_NAME, e.getMessage());
-        }
+
 
         if(locationLocation!= null){
+            chosenMarker = mMap.addMarker(new MarkerOptions().position(
+                    new LatLng(locationLocation.getLatitude(), locationLocation.getLongitude())).
+                    title("You are here!"));
+
             changeCamera(CameraUpdateFactory.newCameraPosition(CameraPosition.fromLatLngZoom(
                                     new LatLng(locationLocation.getLatitude(), locationLocation.getLongitude()), 15)));
             onLocationChanged(locationLocation);
         }
 
-        chosenMarker = mMap.addMarker(new MarkerOptions().position(MONTREAL_LL).title("Marker in Montreal"));
 
-        changeCamera(CameraUpdateFactory.newCameraPosition(MONTREAL));
+
+        //changeCamera(CameraUpdateFactory.newCameraPosition(MONTREAL));
     }
 
     private void clearMap(){
@@ -238,6 +246,10 @@ GoogleApiClient.ConnectionCallbacks,
         if(deleteMarkerButton.getVisibility() == View.VISIBLE){
             deleteMarkerButton.setVisibility(View.INVISIBLE);
         }
+
+        if(setMarkerAsDestinationButton.getVisibility() == View.VISIBLE){
+            setMarkerAsDestinationButton.setVisibility(View.INVISIBLE);
+        }
         Log.d(ACTIVITY_NAME, "clearRedundant()");
     }
     private void createDestinationMarker(LatLng latLng) {
@@ -251,13 +263,13 @@ GoogleApiClient.ConnectionCallbacks,
     }
 
     public void AddGeofenceAtLocation(View v){
-        if(circle.getCenter() == null){
-            Log.e(ACTIVITY_NAME, "Circle.getCenter() is null");
+        if(chosenMarker.getPosition() == null){
+            Log.e(ACTIVITY_NAME, "chosenMarker is null");
             return;
         }
-        addGeofence(circle.getCenter());
+        addGeofence(chosenMarker.getPosition());
 
-        Log.d(ACTIVITY_NAME, "calling addGeofence(circle.getCenter())");
+        Log.d(ACTIVITY_NAME, "calling addGeofence(chosenMarker.getPosition())");
     }
 
     private void addDestinationToList(LatLng latLng){
@@ -460,10 +472,19 @@ GoogleApiClient.ConnectionCallbacks,
     @Override
     public void onStart(){
         super.onStart();
+        Log.d(ACTIVITY_NAME, "onStart()");
+
         if(!mGoogleAPIClient.isConnected()){
             mGoogleAPIClient.connect();
         }
-        Log.d(ACTIVITY_NAME, "onStart()");
+
+        locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        provider = locationManager.getBestProvider(new Criteria(), true);
+        try{
+            locationLocation = locationManager.getLastKnownLocation(provider);
+        }catch (SecurityException e){
+            Log.e(ACTIVITY_NAME, e.getMessage());
+        }
 
     }
 
@@ -538,16 +559,22 @@ GoogleApiClient.ConnectionCallbacks,
 
     @Override
     public boolean onMarkerClick(Marker marker) {
-        boolean marker_exists = false;
+        boolean marker_exists_in_dictionary = false;
+
+        //check if marker exists in geofence
         for(Marker m : destinationDictionary.keySet()){
             if (m.equals(marker)){
-                marker_exists = true;
+                marker_exists_in_dictionary = true;
                 chosenMarker = m;
                 circle = destinationDictionary.get(m);
             }
         }
-        if(!marker_exists) return false;
-        deleteMarkerButton.setVisibility(View.VISIBLE);
+        if(marker_exists_in_dictionary){
+            deleteMarkerButton.setVisibility(View.VISIBLE);
+        }
+        else{
+            setMarkerAsDestinationButton.setVisibility(View.VISIBLE);
+        }
 
         Log.d(ACTIVITY_NAME, marker.getTitle() + " clicked");
 //        Log.d(ACTIVITY_NAME, "Cirlce getcenter(): " + circle.getCenter().toString());
