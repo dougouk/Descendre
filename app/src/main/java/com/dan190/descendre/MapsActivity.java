@@ -82,8 +82,6 @@ GoogleApiClient.ConnectionCallbacks,
     private Vibrator vibrator;
     private boolean insideCircle;
     private List<Geofence> mGeofenceList;
-    private List<Circle> listOfDestinations_circles;
-    private List<Marker> listOfDestinations_markers;
     private Map<Marker, Circle> destinationDictionary;
     Location locationLocation;
     private PendingIntent mGeofencePendingIntent;
@@ -136,19 +134,6 @@ GoogleApiClient.ConnectionCallbacks,
             }
         });
 
-        /*setAlarmButton = (Button) findViewById(R.id.SetAlarm_button);
-        setAlarmButton.setVisibility(View.INVISIBLE);
-        setAlarmButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                AddGeofenceAtLocation(v);
-                Log.d(ACTIVITY_NAME, "Button clicked, AddGeofenceAtLocation(v) called");
-                SendGeofence(v);
-                Log.d(ACTIVITY_NAME, "SendingGeofence from ButtonClick");
-
-            }
-        });*/
-
         setMarkerAsDestinationButton = (Button) findViewById(R.id.makeGeofenceAtMarker_button);
         setMarkerAsDestinationButton.setVisibility(View.INVISIBLE);
         setMarkerAsDestinationButton.setOnClickListener(new View.OnClickListener() {
@@ -171,11 +156,8 @@ GoogleApiClient.ConnectionCallbacks,
             }
         });
         mGeofenceList = new ArrayList<Geofence>();
-        listOfDestinations_circles = new ArrayList<>();
-        listOfDestinations_markers = new ArrayList<>();
         destinationDictionary = new HashMap<Marker, Circle>() {};
         mapFragment.getMapAsync(this);
-        //if(!isGooglePlayServicesAvailable())finish();
 
     }
     public static MapsActivity getInstance(){
@@ -225,15 +207,6 @@ GoogleApiClient.ConnectionCallbacks,
         mMap.setOnMarkerClickListener(this);
         mUiSettings.setMapToolbarEnabled(true);
 
-        /*circle = mMap.addCircle(new CircleOptions()
-                .center(MONTREAL_LL)
-                .radius(200)
-                .strokeColor(Color.BLACK)
-                .fillColor(0x00000000));*/
-
-
-
-
         if(locationLocation!= null){
             chosenMarker = mMap.addMarker(new MarkerOptions().position(
                     new LatLng(locationLocation.getLatitude(), locationLocation.getLongitude())).
@@ -268,11 +241,6 @@ GoogleApiClient.ConnectionCallbacks,
 
         isMarkerClickedOnExistingDestination = false;
 
-      /*  if(setAlarmButton.getVisibility() == View.VISIBLE)
-        {
-            setAlarmButton.setVisibility(View.INVISIBLE);
-        }*/
-
         if(deleteMarkerButton.getVisibility() == View.VISIBLE){
             deleteMarkerButton.setVisibility(View.INVISIBLE);
         }
@@ -302,78 +270,6 @@ GoogleApiClient.ConnectionCallbacks,
 
         Log.d(ACTIVITY_NAME, "calling addGeofence(chosenMarker.getPosition())");
     }
-
-   /* private void addDestinationToList(LatLng latLng){
-        Circle newCircle = mMap.addCircle(new CircleOptions()
-                .center(latLng)
-                .radius(250)
-                .strokeColor(Color.GREEN)
-                .fillColor(0x30CCCCFF));
-        //listOfDestinations_circles.add(newCircle);
-
-        Marker newMarker = mMap.addMarker(new MarkerOptions().position(latLng).title("Destination"));
-        //listOfDestinations_markers.add(newMarker);
-
-        destinationDictionary.put(newMarker, newCircle);
-        Log.d(ACTIVITY_NAME, "Added new destination to listOfDestinations");
-    }
-*/
-
-    /*private void addGeofence(LatLng latlng){
-        mGeofenceList.add(new Geofence.Builder()
-            // Set the request ID of the geofence. This is a string to identify this
-            // geofence.
-        .setRequestId(String.format("fd_%f", latlng.latitude, latlng.longitude))
-        .setCircularRegion(
-                latlng.latitude,
-                latlng.longitude,
-                200
-        )
-        .setExpirationDuration(1000 * 60 * 60) //1 hour
-        .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER *//*|
-                            Geofence.GEOFENCE_TRANSITION_EXIT*//*)
-        .build());
-        Log.d(ACTIVITY_NAME, "Added Geofence");
-        addDestinationToList(latlng);
-    }*/
-
-
-/*    private GeofencingRequest getGeofencingRequest() {
-        GeofencingRequest.Builder builder = new GeofencingRequest.Builder();
-        builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER);
-        builder.addGeofences(mGeofenceList);
-        return builder.build();
-    }*/
-
-   /* public void SendGeofence(View v){
-        Log.d(ACTIVITY_NAME, String.format("Geofence list size : %d", mGeofenceList.size()));
-        try{
-            LocationServices.GeofencingApi.addGeofences(
-                    mGoogleAPIClient,
-                    getGeofencingRequest(),
-                    getGeofencePendingIntent()
-            ).setResultCallback(this);
-        }catch (SecurityException securityException) {
-            // Catch exception generated if the app does not use ACCESS_FINE_LOCATION permission.
-            Log.e(ACTIVITY_NAME, "Need FINE_ACCESS_LOCATION permission");
-//            logSecurityException(securityException);
-        }
-//        Toast.makeText(getApplicationContext(), "Geofences added to Google Client",Toast.LENGTH_SHORT).show();
-        Log.d(ACTIVITY_NAME, "Geofences added to Google Client");
-    }*/
-   /* private PendingIntent getGeofencePendingIntent(){
-        // Reuse the PendingIntent if we already have it.
-        if (mGeofencePendingIntent != null) {
-            Log.d(ACTIVITY_NAME, "pendingIntent already exists");
-
-            return mGeofencePendingIntent;
-        }
-        Intent intent = new Intent(this, GeofenceTransitionsIntentService.class);
-        // We use FLAG_UPDATE_CURRENT so that we get the same pending intent back when
-        // calling addGeofences() and removeGeofences().
-        return PendingIntent.getService(this, 0, intent, PendingIntent.
-                FLAG_UPDATE_CURRENT);
-    }*/
 
     private void changeCamera(CameraUpdate update) {
         changeCamera(update, null);
