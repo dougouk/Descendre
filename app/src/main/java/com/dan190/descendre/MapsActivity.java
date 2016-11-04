@@ -4,7 +4,6 @@ import android.Manifest;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Address;
@@ -32,7 +31,6 @@ import com.google.android.gms.common.api.Result;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.location.FusedLocationProviderApi;
 import com.google.android.gms.location.Geofence;
-import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
@@ -50,8 +48,6 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-import com.dan190.descendre.GeofenceManager;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -61,8 +57,6 @@ import java.util.Map;
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback,
 GoogleApiClient.ConnectionCallbacks,
     GoogleApiClient.OnConnectionFailedListener,
-        GoogleMap.OnMapClickListener,
-        GoogleMap.OnMapLongClickListener,
         GoogleMap.OnMarkerClickListener,
         LocationListener,
         ResultCallback{
@@ -119,7 +113,6 @@ GoogleApiClient.ConnectionCallbacks,
         .addOnConnectionFailedListener(this)
         .build();
         createLocationRequest();
-
         locationSearch = (EditText) findViewById(R.id.search_bar);
         locationSearch.setOnKeyListener(new View.OnKeyListener() {
             @Override
@@ -159,6 +152,7 @@ GoogleApiClient.ConnectionCallbacks,
         destinationDictionary = new HashMap<Marker, Circle>() {};
         mapFragment.getMapAsync(this);
 
+
     }
     public static MapsActivity getInstance(){
         return instance;
@@ -190,6 +184,7 @@ GoogleApiClient.ConnectionCallbacks,
             @Override
             public void onMapClick(LatLng latLng) {
                 Log.d(ACTIVITY_NAME, "map Clicked");
+                Log.d(ACTIVITY_NAME, latLng.toString());
                 clearRedundant();
             }
         });
@@ -199,8 +194,6 @@ GoogleApiClient.ConnectionCallbacks,
             public void onMapLongClick(LatLng latLng) {
                 createDestinationMarker(latLng);
                 setMarkerAsDestinationButton.setVisibility(View.VISIBLE);
-
-//                addGeofence(latLng);
             }
         });
 
@@ -216,9 +209,6 @@ GoogleApiClient.ConnectionCallbacks,
                                     new LatLng(locationLocation.getLatitude(), locationLocation.getLongitude()), 15)));
             onLocationChanged(locationLocation);
         }
-
-
-
         //changeCamera(CameraUpdateFactory.newCameraPosition(MONTREAL));
     }
 
@@ -275,13 +265,6 @@ GoogleApiClient.ConnectionCallbacks,
         changeCamera(update, null);
     }
 
-    @Override
-    public void onMapLongClick(LatLng latLng) {}
-
-    @Override
-    public void onMapClick(LatLng latLng) {
-
-    }
 
     private void changeCamera(CameraUpdate update, CancelableCallback callback) {
         mMap.animateCamera(update);
@@ -385,12 +368,12 @@ GoogleApiClient.ConnectionCallbacks,
 
     @Override
     public void onConnectionSuspended(int i) {
-
+        Log.i(ACTIVITY_NAME, "onConnectionSuspended");
     }
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-
+        Log.i(ACTIVITY_NAME, "onConnectionFailed");
     }
 
     @Override
@@ -406,10 +389,31 @@ GoogleApiClient.ConnectionCallbacks,
         provider = locationManager.getBestProvider(new Criteria(), true);
         try{
             locationLocation = locationManager.getLastKnownLocation(provider);
+            locationManager.requestLocationUpdates(provider, 1000, 10, new android.location.LocationListener() {
+                @Override
+                public void onLocationChanged(Location location) {
+                    Log.d("Background", "Location changed");
+                }
+
+                @Override
+                public void onStatusChanged(String provider, int status, Bundle extras) {
+
+                }
+
+                @Override
+                public void onProviderEnabled(String provider) {
+
+                }
+
+                @Override
+                public void onProviderDisabled(String provider) {
+
+                }
+            });
+
         }catch (SecurityException e){
             Log.e(ACTIVITY_NAME, e.getMessage());
         }
-
     }
 
     @Override
@@ -429,10 +433,11 @@ GoogleApiClient.ConnectionCallbacks,
     @Override
     public void onStop(){
         super.onStop();
-       LocationServices.GeofencingApi.removeGeofences(
-                mGoogleAPIClient,
-                GeofenceManager.getGeofencePendingIntent(mGeofencePendingIntent)
-        ).setResultCallback(this);
+        //stopLocationUpdates();
+//       LocationServices.GeofencingApi.removeGeofences(
+//                mGoogleAPIClient,
+//                GeofenceManager.getGeofencePendingIntent(mGeofencePendingIntent)
+//        ).setResultCallback(this);
         if(mGoogleAPIClient!=null){
             mGoogleAPIClient.disconnect();
         }

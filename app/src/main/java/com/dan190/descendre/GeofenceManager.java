@@ -7,6 +7,7 @@ import android.graphics.Color;
 import android.util.Log;
 import android.view.View;
 
+import com.dan190.descendre.JobScheduler.AutoUpdate;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingRequest;
@@ -43,7 +44,7 @@ public class GeofenceManager {
                         latlng.longitude,
                         200
                 )
-                .setExpirationDuration(1000 * 60 * 60) //1 hour
+                .setExpirationDuration(Geofence.NEVER_EXPIRE)
                 .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER /*|
                             Geofence.GEOFENCE_TRANSITION_EXIT*/)
                 .build());
@@ -93,6 +94,7 @@ public class GeofenceManager {
         }
 //        Toast.makeText(getApplicationContext(), "Geofences added to Google Client",Toast.LENGTH_SHORT).show();
         Log.d(ACTIVITY_NAME, "Geofences added to Google Client");
+        AutoUpdate.scheduleJob();
     }
 
     public static PendingIntent getGeofencePendingIntent(PendingIntent mGeofencePendingIntent){
