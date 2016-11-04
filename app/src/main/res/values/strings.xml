@@ -6,4 +6,9 @@
     <string name="permission_rationale_location">Location Permission is required</string>
     <string name="search_button">Search</string>
     <string name="alarmDialog">Arriving at destination!!</string>
+    <string name="geofence_transition_notification_text">Geofence Transition!!</string>
+    <string name="geofence_transition_entered">Entered geofence zone!!</string>
+    <string name="geofence_transition_exited">Exited geofence zone!!</string>
+    <string name="unknown_geofence_transition">Unknown geofence transition</string>
+    <string name="geofence_transition_invalid_type">Invalid geofence transition</string>
 </resources>
