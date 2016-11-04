@@ -85,7 +85,8 @@ GoogleApiClient.ConnectionCallbacks,
     private Map<Marker, Circle> destinationDictionary;
     Location locationLocation;
     private PendingIntent mGeofencePendingIntent;
-    private boolean areGeofencesAdded;
+    private boolean areGeofencesAdded, isMarkerClickedOnExistingDestination;
+    private UserState userState;
 
     private static final String ACTIVITY_NAME = "MapsActivity";
 
@@ -130,7 +131,7 @@ GoogleApiClient.ConnectionCallbacks,
             }
         });
 
-        setAlarmButton = (Button) findViewById(R.id.SetAlarm_button);
+        /*setAlarmButton = (Button) findViewById(R.id.SetAlarm_button);
         setAlarmButton.setVisibility(View.INVISIBLE);
         setAlarmButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -141,7 +142,7 @@ GoogleApiClient.ConnectionCallbacks,
                 Log.d(ACTIVITY_NAME, "SendingGeofence from ButtonClick");
 
             }
-        });
+        });*/
 
         setMarkerAsDestinationButton = (Button) findViewById(R.id.makeGeofenceAtMarker_button);
         setMarkerAsDestinationButton.setVisibility(View.INVISIBLE);
@@ -151,6 +152,8 @@ GoogleApiClient.ConnectionCallbacks,
                 Log.d(ACTIVITY_NAME, "setMarkerAsDestinationButton clicked");
                 AddGeofenceAtLocation(v);
                 SendGeofence(v);
+                userState = UserState.ADDING_MARKER;
+                clearRedundant();
             }
         });
         deleteMarkerButton = (Button) findViewById(R.id.deleteMarker_button);
@@ -158,6 +161,7 @@ GoogleApiClient.ConnectionCallbacks,
         deleteMarkerButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                userState = UserState.DELETING_MARKER;
                 clearRedundant();
             }
         });
@@ -205,7 +209,7 @@ GoogleApiClient.ConnectionCallbacks,
             @Override
             public void onMapLongClick(LatLng latLng) {
                 createDestinationMarker(latLng);
-                setAlarmButton.setVisibility(View.VISIBLE);
+                setMarkerAsDestinationButton.setVisibility(View.VISIBLE);
 
 //                addGeofence(latLng);
             }
@@ -244,19 +248,23 @@ GoogleApiClient.ConnectionCallbacks,
     }
 
     private void clearRedundant(){
-        if(circle != null) {
-            circle.remove();
-            //Log.d(ACTIVITY_NAME, "removed circle");
-        }
-        if(chosenMarker != null) {
-            chosenMarker.remove();
-            //Log.d(ACTIVITY_NAME, "removed circle");
+        if(userState != UserState.SELECTING_MARKER){
+            if(circle != null) {
+                circle.remove();
+                //Log.d(ACTIVITY_NAME, "removed circle");
+            }
+            if(chosenMarker != null) {
+                chosenMarker.remove();
+                //Log.d(ACTIVITY_NAME, "removed circle");
+            }
         }
 
-        if(setAlarmButton.getVisibility() == View.VISIBLE)
+        isMarkerClickedOnExistingDestination = false;
+
+      /*  if(setAlarmButton.getVisibility() == View.VISIBLE)
         {
             setAlarmButton.setVisibility(View.INVISIBLE);
-        }
+        }*/
 
         if(deleteMarkerButton.getVisibility() == View.VISIBLE){
             deleteMarkerButton.setVisibility(View.INVISIBLE);
@@ -275,6 +283,7 @@ GoogleApiClient.ConnectionCallbacks,
                 .strokeColor(Color.BLACK)
                 .fillColor(0x00000000));
         chosenMarker = mMap.addMarker(new MarkerOptions().position(latLng).title("Picked"));
+        userState = UserState.NORMAL;
     }
 
     public void AddGeofenceAtLocation(View v){
@@ -317,9 +326,7 @@ GoogleApiClient.ConnectionCallbacks,
         .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER |
                             Geofence.GEOFENCE_TRANSITION_EXIT)
         .build());
-//        Toast.makeText(getApplicationContext(), "Added geofence", Toast.LENGTH_SHORT).show();
         Log.d(ACTIVITY_NAME, "Added Geofence");
-        //createDestinationMarker(latlng);
         addDestinationToList(latlng);
     }
 
@@ -519,11 +526,11 @@ GoogleApiClient.ConnectionCallbacks,
     @Override
     public void onStop(){
         super.onStop();
-  /*      LocationServices.GeofencingApi.removeGeofences(
+       LocationServices.GeofencingApi.removeGeofences(
                 mGoogleAPIClient,
                 getGeofencePendingIntent()
         ).setResultCallback(this);
-        mGoogleAPIClient.disconnect();*/
+        mGoogleAPIClient.disconnect();
         Log.d(ACTIVITY_NAME, "onStop()");
     }
 
@@ -583,13 +590,17 @@ GoogleApiClient.ConnectionCallbacks,
                 circle = destinationDictionary.get(m);
             }
         }
+
         if(marker_exists_in_dictionary){
+            isMarkerClickedOnExistingDestination= true;
+            chosenMarker.showInfoWindow();
+
             deleteMarkerButton.setVisibility(View.VISIBLE);
         }
         else{
             setMarkerAsDestinationButton.setVisibility(View.VISIBLE);
         }
-
+        userState = UserState.SELECTING_MARKER;
         Log.d(ACTIVITY_NAME, marker.getTitle() + " clicked");
 //        Log.d(ACTIVITY_NAME, "Cirlce getcenter(): " + circle.getCenter().toString());
 
