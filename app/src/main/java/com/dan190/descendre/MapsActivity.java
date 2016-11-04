@@ -323,8 +323,8 @@ GoogleApiClient.ConnectionCallbacks,
                 200
         )
         .setExpirationDuration(1000 * 60 * 60) //1 hour
-        .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER |
-                            Geofence.GEOFENCE_TRANSITION_EXIT)
+        .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER /*|
+                            Geofence.GEOFENCE_TRANSITION_EXIT*/)
         .build());
         Log.d(ACTIVITY_NAME, "Added Geofence");
         addDestinationToList(latlng);
@@ -530,7 +530,9 @@ GoogleApiClient.ConnectionCallbacks,
                 mGoogleAPIClient,
                 getGeofencePendingIntent()
         ).setResultCallback(this);
-        mGoogleAPIClient.disconnect();
+        if(mGoogleAPIClient!=null){
+            mGoogleAPIClient.disconnect();
+        }
         Log.d(ACTIVITY_NAME, "onStop()");
     }
 
