@@ -29,11 +29,15 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.Result;
 import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.FusedLocationProviderApi;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment;
+import com.google.android.gms.location.places.ui.PlaceSelectionListener;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -66,9 +70,9 @@ GoogleApiClient.ConnectionCallbacks,
     private UiSettings mUiSettings;
     private Circle circle, currentlySelectedCircle;
     private LocationManager locationManager;
-    private EditText locationSearch;
+    //private EditText locationSearch;
     private String locationString, provider;
-    private Button searchButton, setAlarmButton, deleteMarkerButton, setMarkerAsDestinationButton;
+    private Button deleteMarkerButton, setMarkerAsDestinationButton;
     private FusedLocationProviderApi fusedLocationProviderApi = LocationServices.FusedLocationApi;
     private GoogleApiClient mGoogleAPIClient;
     private LocationRequest locationRequest;
@@ -81,6 +85,7 @@ GoogleApiClient.ConnectionCallbacks,
     private PendingIntent mGeofencePendingIntent;
     private boolean areGeofencesAdded, isMarkerClickedOnExistingDestination;
     private UserState userState;
+    private PlaceAutocompleteFragment placeAutocompleteFragment;
 
     private static MapsActivity instance;
 
@@ -113,7 +118,7 @@ GoogleApiClient.ConnectionCallbacks,
         .addOnConnectionFailedListener(this)
         .build();
         createLocationRequest();
-        locationSearch = (EditText) findViewById(R.id.search_bar);
+        /*locationSearch = (EditText) findViewById(R.id.search_bar);
         locationSearch.setOnKeyListener(new View.OnKeyListener() {
             @Override
             public boolean onKey(View v, int keyCode, KeyEvent event) {
@@ -125,7 +130,7 @@ GoogleApiClient.ConnectionCallbacks,
                 }
                 return false;
             }
-        });
+        });*/
 
         setMarkerAsDestinationButton = (Button) findViewById(R.id.makeGeofenceAtMarker_button);
         setMarkerAsDestinationButton.setVisibility(View.INVISIBLE);
@@ -151,6 +156,30 @@ GoogleApiClient.ConnectionCallbacks,
         mGeofenceList = new ArrayList<Geofence>();
         destinationDictionary = new HashMap<Marker, Circle>() {};
         mapFragment.getMapAsync(this);
+        placeAutocompleteFragment= (PlaceAutocompleteFragment) getFragmentManager().findFragmentById(R.id.searchFragment);
+        placeAutocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
+            @Override
+            public void onPlaceSelected(Place place) {
+                Log.d(ACTIVITY_NAME, "Selected place Add is : " + place.getAddress().toString());
+                Log.d(ACTIVITY_NAME, "Selected place LatLng is : " + place.getLatLng().toString());
+                clearRedundant();
+                chosenMarker = mMap.addMarker(new MarkerOptions()
+                        .position(place.getLatLng())
+                        .title(place.getAddress().toString()));
+                circle = mMap.addCircle(new CircleOptions()
+                        .center(place.getLatLng())
+                        .radius(200)
+                        .strokeColor(Color.BLACK)
+                        .fillColor(0x00000000));
+                mMap.animateCamera(CameraUpdateFactory.newLatLng(place.getLatLng()));
+            }
+
+            @Override
+            public void onError(Status status) {
+                Log.e(ACTIVITY_NAME, status.getStatusMessage());
+            }
+        });
+
 
 
     }
@@ -214,7 +243,6 @@ GoogleApiClient.ConnectionCallbacks,
 
     private void clearMap(){
         mMap.clear();
-        setAlarmButton.setVisibility(View.INVISIBLE);
     }
 
     private void clearRedundant(){
@@ -319,7 +347,7 @@ GoogleApiClient.ConnectionCallbacks,
         //checkBoundary(location);
     }
 
-    public void onMapSearch(View v){
+    /*public void onMapSearch(View v){
         locationString = locationSearch.getText().toString();
         searchButton = (Button) findViewById(R.id.search_button);
 
@@ -347,7 +375,7 @@ GoogleApiClient.ConnectionCallbacks,
 
         }
     }
-
+*/
     @Override
     public void onConnected(@Nullable Bundle bundle) {
         startLocationUpdates();
