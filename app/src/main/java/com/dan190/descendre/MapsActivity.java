@@ -50,6 +50,8 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import com.dan190.descendre.GeofenceManager;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -88,6 +90,8 @@ GoogleApiClient.ConnectionCallbacks,
     private boolean areGeofencesAdded, isMarkerClickedOnExistingDestination;
     private UserState userState;
 
+    private static MapsActivity instance;
+
     private static final String ACTIVITY_NAME = "MapsActivity";
 
     public static final CameraPosition MONTREAL =
@@ -104,6 +108,7 @@ GoogleApiClient.ConnectionCallbacks,
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        instance = this;
         vibrator = (Vibrator) this.getApplicationContext().getSystemService(Context.VIBRATOR_SERVICE);
         setContentView(R.layout.activity_maps);
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
@@ -151,7 +156,7 @@ GoogleApiClient.ConnectionCallbacks,
             public void onClick(View v) {
                 Log.d(ACTIVITY_NAME, "setMarkerAsDestinationButton clicked");
                 AddGeofenceAtLocation(v);
-                SendGeofence(v);
+                GeofenceManager.SendGeofence(v, mGeofenceList, mGoogleAPIClient, mGeofencePendingIntent);
                 userState = UserState.ADDING_MARKER;
                 clearRedundant();
             }
@@ -173,7 +178,9 @@ GoogleApiClient.ConnectionCallbacks,
         //if(!isGooglePlayServicesAvailable())finish();
 
     }
-
+    public static MapsActivity getInstance(){
+        return instance;
+    }
     private void createLocationRequest() {
         locationRequest = new LocationRequest();
         locationRequest.setInterval(10000);
@@ -291,12 +298,12 @@ GoogleApiClient.ConnectionCallbacks,
             Log.e(ACTIVITY_NAME, "chosenMarker is null");
             return;
         }
-        addGeofence(chosenMarker.getPosition());
+        GeofenceManager.addGeofence(mMap, chosenMarker.getPosition(), mGeofenceList,destinationDictionary);
 
         Log.d(ACTIVITY_NAME, "calling addGeofence(chosenMarker.getPosition())");
     }
 
-    private void addDestinationToList(LatLng latLng){
+   /* private void addDestinationToList(LatLng latLng){
         Circle newCircle = mMap.addCircle(new CircleOptions()
                 .center(latLng)
                 .radius(250)
@@ -310,9 +317,9 @@ GoogleApiClient.ConnectionCallbacks,
         destinationDictionary.put(newMarker, newCircle);
         Log.d(ACTIVITY_NAME, "Added new destination to listOfDestinations");
     }
+*/
 
-
-    private void addGeofence(LatLng latlng){
+    /*private void addGeofence(LatLng latlng){
         mGeofenceList.add(new Geofence.Builder()
             // Set the request ID of the geofence. This is a string to identify this
             // geofence.
@@ -323,22 +330,22 @@ GoogleApiClient.ConnectionCallbacks,
                 200
         )
         .setExpirationDuration(1000 * 60 * 60) //1 hour
-        .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER /*|
-                            Geofence.GEOFENCE_TRANSITION_EXIT*/)
+        .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER *//*|
+                            Geofence.GEOFENCE_TRANSITION_EXIT*//*)
         .build());
         Log.d(ACTIVITY_NAME, "Added Geofence");
         addDestinationToList(latlng);
-    }
+    }*/
 
 
-    private GeofencingRequest getGeofencingRequest() {
+/*    private GeofencingRequest getGeofencingRequest() {
         GeofencingRequest.Builder builder = new GeofencingRequest.Builder();
         builder.setInitialTrigger(GeofencingRequest.INITIAL_TRIGGER_ENTER);
         builder.addGeofences(mGeofenceList);
         return builder.build();
-    }
+    }*/
 
-    public void SendGeofence(View v){
+   /* public void SendGeofence(View v){
         Log.d(ACTIVITY_NAME, String.format("Geofence list size : %d", mGeofenceList.size()));
         try{
             LocationServices.GeofencingApi.addGeofences(
@@ -353,8 +360,8 @@ GoogleApiClient.ConnectionCallbacks,
         }
 //        Toast.makeText(getApplicationContext(), "Geofences added to Google Client",Toast.LENGTH_SHORT).show();
         Log.d(ACTIVITY_NAME, "Geofences added to Google Client");
-    }
-    private PendingIntent getGeofencePendingIntent(){
+    }*/
+   /* private PendingIntent getGeofencePendingIntent(){
         // Reuse the PendingIntent if we already have it.
         if (mGeofencePendingIntent != null) {
             Log.d(ACTIVITY_NAME, "pendingIntent already exists");
@@ -366,7 +373,7 @@ GoogleApiClient.ConnectionCallbacks,
         // calling addGeofences() and removeGeofences().
         return PendingIntent.getService(this, 0, intent, PendingIntent.
                 FLAG_UPDATE_CURRENT);
-    }
+    }*/
 
     private void changeCamera(CameraUpdate update) {
         changeCamera(update, null);
@@ -528,7 +535,7 @@ GoogleApiClient.ConnectionCallbacks,
         super.onStop();
        LocationServices.GeofencingApi.removeGeofences(
                 mGoogleAPIClient,
-                getGeofencePendingIntent()
+                GeofenceManager.getGeofencePendingIntent(mGeofencePendingIntent)
         ).setResultCallback(this);
         if(mGoogleAPIClient!=null){
             mGoogleAPIClient.disconnect();
