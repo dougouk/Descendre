@@ -6,9 +6,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
-import android.location.Address;
 import android.location.Criteria;
-import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
@@ -19,12 +17,11 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
-import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.Toast;
 
+import com.dan190.descendre.Geofence.GeofenceManager;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.Result;
@@ -52,7 +49,6 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -162,10 +158,11 @@ GoogleApiClient.ConnectionCallbacks,
             public void onPlaceSelected(Place place) {
                 Log.d(ACTIVITY_NAME, "Selected place Add is : " + place.getAddress().toString());
                 Log.d(ACTIVITY_NAME, "Selected place LatLng is : " + place.getLatLng().toString());
+                Log.d(ACTIVITY_NAME, "Selected place Name is : " + place.getName().toString());
                 clearRedundant();
                 chosenMarker = mMap.addMarker(new MarkerOptions()
                         .position(place.getLatLng())
-                        .title(place.getAddress().toString()));
+                        .title(place.getName().toString()));
                 circle = mMap.addCircle(new CircleOptions()
                         .center(place.getLatLng())
                         .radius(200)
@@ -342,8 +339,6 @@ GoogleApiClient.ConnectionCallbacks,
     @Override
     public void onLocationChanged(Location location) {
         Log.d(ACTIVITY_NAME, "Location Changed");
-
-//        Toast.makeText(getApplicationContext(), "Location Changed", Toast.LENGTH_SHORT).show();
         //checkBoundary(location);
     }
 
@@ -392,11 +387,13 @@ GoogleApiClient.ConnectionCallbacks,
     private void stopLocationUpdates() {
         LocationServices.FusedLocationApi.removeLocationUpdates(
                 mGoogleAPIClient, this);
+        Log.d(ACTIVITY_NAME, "stopLocationUpdates");
     }
 
     @Override
     public void onConnectionSuspended(int i) {
         Log.i(ACTIVITY_NAME, "onConnectionSuspended");
+        stopLocationUpdates();
     }
 
     @Override
@@ -416,28 +413,31 @@ GoogleApiClient.ConnectionCallbacks,
         locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         provider = locationManager.getBestProvider(new Criteria(), true);
         try{
-            locationLocation = locationManager.getLastKnownLocation(provider);
-            locationManager.requestLocationUpdates(provider, 1000, 10, new android.location.LocationListener() {
-                @Override
-                public void onLocationChanged(Location location) {
-                    Log.d("Background", "Location changed");
-                }
+            if(provider != null){
+                locationLocation = locationManager.getLastKnownLocation(provider);
+                locationManager.requestLocationUpdates(provider, 1000, 10, new android.location.LocationListener() {
+                    @Override
+                    public void onLocationChanged(Location location) {
+                        Log.d("Background", "Location changed");
+                    }
 
-                @Override
-                public void onStatusChanged(String provider, int status, Bundle extras) {
+                    @Override
+                    public void onStatusChanged(String provider, int status, Bundle extras) {
 
-                }
+                    }
 
-                @Override
-                public void onProviderEnabled(String provider) {
+                    @Override
+                    public void onProviderEnabled(String provider) {
 
-                }
+                    }
 
-                @Override
-                public void onProviderDisabled(String provider) {
+                    @Override
+                    public void onProviderDisabled(String provider) {
 
-                }
-            });
+                    }
+                });
+            }
+
 
         }catch (SecurityException e){
             Log.e(ACTIVITY_NAME, e.getMessage());
@@ -461,15 +461,26 @@ GoogleApiClient.ConnectionCallbacks,
     @Override
     public void onStop(){
         super.onStop();
-        //stopLocationUpdates();
-//       LocationServices.GeofencingApi.removeGeofences(
-//                mGoogleAPIClient,
-//                GeofenceManager.getGeofencePendingIntent(mGeofencePendingIntent)
-//        ).setResultCallback(this);
+
+        Log.d(ACTIVITY_NAME, "onStop()");
+    }
+
+    @Override
+    public void onDestroy(){
+        super.onDestroy();
+        Log.d(ACTIVITY_NAME, "onDestroy()");
+        stopLocationUpdates();
+        removeGeofences();
         if(mGoogleAPIClient!=null){
             mGoogleAPIClient.disconnect();
         }
-        Log.d(ACTIVITY_NAME, "onStop()");
+    }
+
+    private void removeGeofences(){
+        LocationServices.GeofencingApi.removeGeofences(
+                mGoogleAPIClient,
+                GeofenceManager.getGeofencePendingIntent(mGeofencePendingIntent)).setResultCallback(this);
+        Log.d(ACTIVITY_NAME, "Removed Geofences");
     }
 
 
@@ -482,7 +493,6 @@ GoogleApiClient.ConnectionCallbacks,
             //do nothing
             if(insideCircle)insideCircle=false;
         }else{
-            //Toast.makeText(getApplicationContext(), "INSIDE CIRCLE", Toast.LENGTH_SHORT).show();
             if(insideCircle)return;
             insideCircle = true;
             createNotification();
