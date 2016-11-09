@@ -113,13 +113,13 @@ public class GeofenceTransitionsIntentService extends IntentService {
         // Define the notification settings.
         builder.setSmallIcon(R.drawable.checkmark)
                 // In a real app, you may want to use a library like Volley
-                // to decode the Bitmap.
-//                .setLargeIcon(BitmapFactory.decodeResource(getResources(),
-//                        R.drawable.sleep))
-                .setLargeIcon(R.drawable.sleep)
+                //to decode the Bitmap.
+                .setLargeIcon(BitmapFactory.decodeResource(getResources(),
+                        R.drawable.sleep))
+                //.setLargeIcon(R.drawable.sleep)
                 .setColor(Color.BLUE)
-                .setContentTitle("Geofence Transition")
-                .setContentText(getString(R.string.geofence_transition_notification_text));
+                .setContentTitle("Geofence Transition");
+                //.setContentText(getString(R.string.geofence_transition_notification_text));
                 //.setContentIntent(notificationPendingIntent);
         builder.setVibrate(new long[] { 1000, 1000, 1000, 1000, 1000 });
         // Dismiss notification once the user touches it.
@@ -130,7 +130,7 @@ public class GeofenceTransitionsIntentService extends IntentService {
                 (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
         // Issue the notification
-        mNotificationManager.notify(0, builder.build());
+        mNotificationManager.notify(001, builder.build());
     }
 
     private String getTransitionString(int transitionType) {
