@@ -115,7 +115,7 @@ public class GeofenceTransitionsIntentService extends IntentService {
                 // In a real app, you may want to use a library like Volley
                 //to decode the Bitmap.
                 .setLargeIcon(BitmapFactory.decodeResource(getResources(),
-                        R.drawable.sleep))
+                        R.drawable.bus_stop))
                 //.setLargeIcon(R.drawable.sleep)
                 .setColor(Color.BLUE)
                 .setContentTitle("Geofence Transition");

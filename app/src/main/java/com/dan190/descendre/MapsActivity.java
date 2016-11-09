@@ -282,6 +282,7 @@ GoogleApiClient.ConnectionCallbacks,
         if(setMarkerAsDestinationButton.getVisibility() == View.VISIBLE){
             setMarkerAsDestinationButton.setVisibility(View.INVISIBLE);
         }
+//        userState = UserState.NORMAL;
         Log.d(ACTIVITY_NAME, "clearRedundant()");
     }
     private void createDestinationMarker(LatLng latLng) {
@@ -562,13 +563,13 @@ GoogleApiClient.ConnectionCallbacks,
         if(marker_exists_in_dictionary){
             isMarkerClickedOnExistingDestination= true;
             chosenMarker.showInfoWindow();
+            userState = UserState.SELECTING_MARKER;
 
             deleteMarkerButton.setVisibility(View.VISIBLE);
         }
         else{
             setMarkerAsDestinationButton.setVisibility(View.VISIBLE);
         }
-        userState = UserState.SELECTING_MARKER;
         Log.d(ACTIVITY_NAME, marker.getTitle() + " clicked");
 //        Log.d(ACTIVITY_NAME, "Cirlce getcenter(): " + circle.getCenter().toString());
 
