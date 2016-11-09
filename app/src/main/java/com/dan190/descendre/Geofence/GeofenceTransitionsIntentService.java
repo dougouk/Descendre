@@ -1,4 +1,4 @@
-package com.dan190.descendre;
+package com.dan190.descendre.Geofence;
 
 import android.app.IntentService;
 import android.app.NotificationManager;
@@ -12,6 +12,8 @@ import android.support.v7.app.NotificationCompat;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.dan190.descendre.MapsActivity;
+import com.dan190.descendre.R;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingEvent;
 
@@ -112,15 +114,16 @@ public class GeofenceTransitionsIntentService extends IntentService {
         builder.setSmallIcon(R.drawable.checkmark)
                 // In a real app, you may want to use a library like Volley
                 // to decode the Bitmap.
-                .setLargeIcon(BitmapFactory.decodeResource(getResources(),
-                        R.drawable.sleep))
-                .setColor(Color.RED)
+//                .setLargeIcon(BitmapFactory.decodeResource(getResources(),
+//                        R.drawable.sleep))
+                .setLargeIcon(R.drawable.sleep)
+                .setColor(Color.BLUE)
                 .setContentTitle("Geofence Transition")
-                .setContentText(getString(R.string.geofence_transition_notification_text))
-                .setContentIntent(notificationPendingIntent);
+                .setContentText(getString(R.string.geofence_transition_notification_text));
+                //.setContentIntent(notificationPendingIntent);
         builder.setVibrate(new long[] { 1000, 1000, 1000, 1000, 1000 });
         // Dismiss notification once the user touches it.
-        builder.setAutoCancel(true);
+       // builder.setAutoCancel(true);
 
         // Get an instance of the Notification manager
         NotificationManager mNotificationManager =

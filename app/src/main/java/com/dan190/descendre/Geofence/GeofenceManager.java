@@ -1,4 +1,4 @@
-package com.dan190.descendre;
+package com.dan190.descendre.Geofence;
 
 import android.app.PendingIntent;
 import android.content.Context;
@@ -8,6 +8,7 @@ import android.util.Log;
 import android.view.View;
 
 import com.dan190.descendre.JobScheduler.AutoUpdate;
+import com.dan190.descendre.MapsActivity;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingRequest;
