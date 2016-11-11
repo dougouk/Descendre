@@ -4,7 +4,9 @@ import android.Manifest;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Camera;
 import android.graphics.Color;
 import android.location.Criteria;
 import android.location.Location;
@@ -23,6 +25,8 @@ import android.widget.Toast;
 
 import com.dan190.descendre.Geofence.GeofenceManager;
 import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
+import com.google.android.gms.common.GooglePlayServicesRepairableException;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.Result;
 import com.google.android.gms.common.api.ResultCallback;
@@ -34,6 +38,7 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.places.Place;
 import com.google.android.gms.location.places.ui.PlaceAutocompleteFragment;
+import com.google.android.gms.location.places.ui.PlacePicker;
 import com.google.android.gms.location.places.ui.PlaceSelectionListener;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -114,19 +119,6 @@ GoogleApiClient.ConnectionCallbacks,
         .addOnConnectionFailedListener(this)
         .build();
         createLocationRequest();
-        /*locationSearch = (EditText) findViewById(R.id.search_bar);
-        locationSearch.setOnKeyListener(new View.OnKeyListener() {
-            @Override
-            public boolean onKey(View v, int keyCode, KeyEvent event) {
-                Log.d(ACTIVITY_NAME, "onKey()");
-                if((event.getAction() == KeyEvent.ACTION_DOWN) &&
-                (keyCode == KeyEvent.KEYCODE_ENTER)){
-                    onMapSearch(v);
-                    return true;
-                }
-                return false;
-            }
-        });*/
 
         setMarkerAsDestinationButton = (Button) findViewById(R.id.makeGeofenceAtMarker_button);
         setMarkerAsDestinationButton.setVisibility(View.INVISIBLE);
@@ -135,7 +127,6 @@ GoogleApiClient.ConnectionCallbacks,
             public void onClick(View v) {
                 Log.d(ACTIVITY_NAME, "setMarkerAsDestinationButton clicked");
                 AddGeofenceAtLocation(v);
-                GeofenceManager.SendGeofence(v, mGeofenceList, mGoogleAPIClient, mGeofencePendingIntent);
                 userState = UserState.ADDING_MARKER;
                 clearRedundant();
             }
@@ -149,9 +140,27 @@ GoogleApiClient.ConnectionCallbacks,
                 clearRedundant();
             }
         });
-        mGeofenceList = new ArrayList<Geofence>();
+
+        Button placePickerButton = (Button) findViewById(R.id.button_placePicker_activity_maps);
+        placePickerButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                PlacePicker.IntentBuilder builder = new PlacePicker.IntentBuilder();
+
+                try{
+                    startActivityForResult(builder.build(instance), PLACE_PICKER_REQUEST);
+                }catch(GooglePlayServicesNotAvailableException e){
+                    e.printStackTrace();
+                }catch(GooglePlayServicesRepairableException e){
+                    e.printStackTrace();
+                }
+            }
+        });
+        mGeofenceList = new ArrayList<>();
         destinationDictionary = new HashMap<Marker, Circle>() {};
+
         mapFragment.getMapAsync(this);
+
         placeAutocompleteFragment= (PlaceAutocompleteFragment) getFragmentManager().findFragmentById(R.id.searchFragment);
         placeAutocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
             @Override
@@ -173,20 +182,34 @@ GoogleApiClient.ConnectionCallbacks,
 
             @Override
             public void onError(Status status) {
+                Toast.makeText(getApplicationContext(), "Cannot find place", Toast.LENGTH_SHORT).show();
                 Log.e(ACTIVITY_NAME, status.getStatusMessage());
             }
         });
+    }
 
+    private static final int PLACE_PICKER_REQUEST = 1;
 
-
+    protected void onActivityResult(int requestCode, int resultCode, Intent data){
+        if(requestCode == PLACE_PICKER_REQUEST){
+            if(resultCode == RESULT_OK){
+                Place place = PlacePicker.getPlace(this, data);
+                createDestinationMarker(place.getLatLng());
+                changeCamera(CameraUpdateFactory.newLatLng(place.getLatLng()));
+                Log.d(ACTIVITY_NAME, "onActivityResult()");
+                chosenMarker.setPosition(place.getLatLng());
+                AddGeofenceAtLocation(null);
+                clearRedundant();
+            }
+        }
     }
     public static MapsActivity getInstance(){
         return instance;
     }
     private void createLocationRequest() {
         locationRequest = new LocationRequest();
-        locationRequest.setInterval(10000);
-        locationRequest.setFastestInterval(5000);
+        locationRequest.setInterval(80000);
+        locationRequest.setFastestInterval(2000);
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
     }
 
@@ -238,10 +261,6 @@ GoogleApiClient.ConnectionCallbacks,
         //changeCamera(CameraUpdateFactory.newCameraPosition(MONTREAL));
     }
 
-    private void clearMap(){
-        mMap.clear();
-    }
-
     private void clearRedundant(){
         if(userState != UserState.SELECTING_MARKER){
             if(circle != null) {
@@ -263,6 +282,7 @@ GoogleApiClient.ConnectionCallbacks,
         if(setMarkerAsDestinationButton.getVisibility() == View.VISIBLE){
             setMarkerAsDestinationButton.setVisibility(View.INVISIBLE);
         }
+//        userState = UserState.NORMAL;
         Log.d(ACTIVITY_NAME, "clearRedundant()");
     }
     private void createDestinationMarker(LatLng latLng) {
@@ -282,6 +302,7 @@ GoogleApiClient.ConnectionCallbacks,
             return;
         }
         GeofenceManager.addGeofence(mMap, chosenMarker.getPosition(), mGeofenceList,destinationDictionary);
+        GeofenceManager.SendGeofence(v, mGeofenceList, mGoogleAPIClient, mGeofencePendingIntent);
 
         Log.d(ACTIVITY_NAME, "calling addGeofence(chosenMarker.getPosition())");
     }
@@ -542,13 +563,13 @@ GoogleApiClient.ConnectionCallbacks,
         if(marker_exists_in_dictionary){
             isMarkerClickedOnExistingDestination= true;
             chosenMarker.showInfoWindow();
+            userState = UserState.SELECTING_MARKER;
 
             deleteMarkerButton.setVisibility(View.VISIBLE);
         }
         else{
             setMarkerAsDestinationButton.setVisibility(View.VISIBLE);
         }
-        userState = UserState.SELECTING_MARKER;
         Log.d(ACTIVITY_NAME, marker.getTitle() + " clicked");
 //        Log.d(ACTIVITY_NAME, "Cirlce getcenter(): " + circle.getCenter().toString());
 

@@ -95,7 +95,7 @@ public class GeofenceManager {
         }
 //        Toast.makeText(getApplicationContext(), "Geofences added to Google Client",Toast.LENGTH_SHORT).show();
         Log.d(ACTIVITY_NAME, "Geofences added to Google Client");
-        AutoUpdate.scheduleJob();
+        //AutoUpdate.scheduleJob();
     }
 
     public static PendingIntent getGeofencePendingIntent(PendingIntent mGeofencePendingIntent){
