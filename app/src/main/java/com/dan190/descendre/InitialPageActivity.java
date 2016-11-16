@@ -34,6 +34,15 @@ public class InitialPageActivity extends Activity {
                 startActivity(intent);
             }
         });
+
+        Button slidingView = (Button)findViewById(R.id.button_slidingViews);
+        slidingView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(getApplicationContext(), TabLayoutActivity.class);
+                startActivity(intent);
+            }
+        });
     }
 
 

@@ -24,9 +24,9 @@ public class PagerAdapter extends FragmentStatePagerAdapter {
             case 1:
                 AlarmMonitorFragment tab2 = new AlarmMonitorFragment();
                 return tab2;
-           /* case 2:
-                TabFragment3 tab3 = new TabFragment3();
-                return tab3;*/
+            case 2:
+                AlarmMonitorFragment tab3 = new AlarmMonitorFragment();
+                return tab3;
             default:
                 return null;
         }
@@ -34,6 +34,6 @@ public class PagerAdapter extends FragmentStatePagerAdapter {
 
     @Override
     public int getCount() {
-        return 0;
+        return mNumOfTabs;
     }
 }
