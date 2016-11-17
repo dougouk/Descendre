@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 
+import com.dan190.descendre.Util.Prefs;
 import com.google.android.gms.location.places.ui.PlacePicker;
 
 /**
@@ -18,6 +19,9 @@ public class InitialPageActivity extends Activity {
     public void onCreate(Bundle savedInstance){
         super.onCreate(savedInstance);
         setContentView(R.layout.initial_page);
+
+        Prefs.initialize(this);
+
         Button myMaps = (Button) findViewById(R.id.button_myMap);
         myMaps.setOnClickListener(new View.OnClickListener() {
             @Override

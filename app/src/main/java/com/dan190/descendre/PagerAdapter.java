@@ -4,6 +4,9 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 
+import com.dan190.descendre.Map.MapFragment;
+import com.dan190.descendre.Settings.SettingsFragment;
+
 /**
  * Created by Dan on 11/11/2016.
  */
@@ -19,13 +22,13 @@ public class PagerAdapter extends FragmentStatePagerAdapter {
     public Fragment getItem(int position) {
         switch (position){
             case 0:
-                SettingsFragment tab1 = new SettingsFragment();
+                MapFragment tab1 = new MapFragment();
                 return tab1;
             case 1:
                 AlarmMonitorFragment tab2 = new AlarmMonitorFragment();
                 return tab2;
             case 2:
-                AlarmMonitorFragment tab3 = new AlarmMonitorFragment();
+                SettingsFragment tab3 = new SettingsFragment();
                 return tab3;
             default:
                 return null;
@@ -36,4 +39,5 @@ public class PagerAdapter extends FragmentStatePagerAdapter {
     public int getCount() {
         return mNumOfTabs;
     }
+
 }

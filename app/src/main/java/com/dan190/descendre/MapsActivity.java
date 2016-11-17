@@ -23,6 +23,7 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import com.dan190.descendre.Geofence.GeofenceManager;
+import com.dan190.descendre.Util.UserState;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
 import com.google.android.gms.common.GooglePlayServicesRepairableException;

@@ -15,11 +15,12 @@ public class TabLayoutActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.tab_layout);
+        getSupportActionBar().hide();
 
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tab_layout);
-        tabLayout.addTab(tabLayout.newTab().setText("Tab 1"));
-        tabLayout.addTab(tabLayout.newTab().setText("Tab 2"));
-        tabLayout.addTab(tabLayout.newTab().setText("Tab 3"));
+        tabLayout.addTab(tabLayout.newTab().setIcon(R.drawable.map_icon));
+        tabLayout.addTab(tabLayout.newTab().setIcon(R.drawable.bus_stop2));
+        tabLayout.addTab(tabLayout.newTab().setIcon(R.drawable.settings));
         tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
 
         final ViewPager viewPager = (ViewPager) findViewById(R.id.pager);

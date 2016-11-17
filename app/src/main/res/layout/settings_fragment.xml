@@ -5,5 +5,22 @@
 <TextView
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:text="Settings fragment"/>
+    android:text="Settings fragment"
+    android:textAppearance="@style/TextAppearance.AppCompat.Light.SearchResult.Title" />
+
+    <Switch
+        android:text="Play Sound When Arriving"
+        style="@style/Settings.Switch"
+        android:id="@+id/sound_setting" />
+
+    <Switch
+        android:text="Vibrate When Arriving"
+        style="@style/Settings.Switch"
+        android:id="@+id/vibrate_setting" />
+
+    <Switch
+        android:text="Light When Arriving"
+        style="@style/Settings.Switch"
+        android:id="@+id/light_setting" />
+
 </LinearLayout>
