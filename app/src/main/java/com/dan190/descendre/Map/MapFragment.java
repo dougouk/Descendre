@@ -51,16 +51,16 @@ public class MapFragment extends Fragment {
 
         fragmentManager = getChildFragmentManager();
 
-            mapFragment = (SupportMapFragment) fragmentManager.findFragmentById(R.id.map);
+        mapFragment = (SupportMapFragment) fragmentManager.findFragmentById(R.id.map);
         if(mapFragment == null){
             mapFragment = SupportMapFragment.newInstance();
             fragmentManager.beginTransaction().replace(R.id.map, mapFragment).commit();
+            Log.d(ACTIVITY_NAME, "Replaced Map Fragment");
         }
-            if(mapManager == null) mapManager = new MapManager();
+        if(mapManager == null) mapManager = new MapManager();
 
-            mapFragment.getMapAsync(mapManager);
-            mapFragment.setRetainInstance(true);
-            Log.i(ACTIVITY_NAME, "Recreating MapFragment");
+        mapFragment.getMapAsync(mapManager);
+        mapFragment.setRetainInstance(true);
     }
 
     @Override
