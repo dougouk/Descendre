@@ -302,7 +302,7 @@ GoogleApiClient.ConnectionCallbacks,
             return;
         }
         GeofenceManager.addGeofence(mMap, chosenMarker.getPosition(), mGeofenceList,destinationDictionary);
-        GeofenceManager.SendGeofence(v, mGeofenceList, mGoogleAPIClient, mGeofencePendingIntent);
+        GeofenceManager.SendGeofence(v, mGeofenceList, mGoogleAPIClient, mGeofencePendingIntent, getApplicationContext(), this);
 
         Log.d(ACTIVITY_NAME, "calling addGeofence(chosenMarker.getPosition())");
     }
@@ -500,7 +500,7 @@ GoogleApiClient.ConnectionCallbacks,
     private void removeGeofences(){
         LocationServices.GeofencingApi.removeGeofences(
                 mGoogleAPIClient,
-                GeofenceManager.getGeofencePendingIntent(mGeofencePendingIntent)).setResultCallback(this);
+                GeofenceManager.getGeofencePendingIntent(mGeofencePendingIntent, getApplicationContext())).setResultCallback(this);
         Log.d(ACTIVITY_NAME, "Removed Geofences");
     }
 

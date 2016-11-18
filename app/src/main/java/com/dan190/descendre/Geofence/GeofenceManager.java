@@ -4,12 +4,15 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
+import android.support.annotation.NonNull;
 import android.util.Log;
 import android.view.View;
 
 import com.dan190.descendre.JobScheduler.AutoUpdate;
 import com.dan190.descendre.MapsActivity;
+import com.dan190.descendre.R;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.location.LocationServices;
@@ -79,15 +82,16 @@ public class GeofenceManager {
     public static void SendGeofence(View v,
                                     List<Geofence> mGeofenceList,
                                     GoogleApiClient mGoogleAPIClient,
-                                    PendingIntent mGeofencePendingIntent){
+                                    PendingIntent mGeofencePendingIntent,
+                                    Context context,
+                                    @NonNull ResultCallback resultCallback){
         Log.d("GeofenceManager", String.format("Geofence list size : %d", mGeofenceList.size()));
-        Context context = MapsActivity.getInstance();
         try{
             LocationServices.GeofencingApi.addGeofences(
                     mGoogleAPIClient,
                     getGeofencingRequest(mGeofenceList),
-                    getGeofencePendingIntent(mGeofencePendingIntent)
-            ).setResultCallback(MapsActivity.getInstance());
+                    getGeofencePendingIntent(mGeofencePendingIntent, context)
+            ).setResultCallback(resultCallback);
         }catch (SecurityException securityException) {
             // Catch exception generated if the app does not use ACCESS_FINE_LOCATION permission.
             Log.e(ACTIVITY_NAME, "Need FINE_ACCESS_LOCATION permission");
@@ -98,8 +102,7 @@ public class GeofenceManager {
         //AutoUpdate.scheduleJob();
     }
 
-    public static PendingIntent getGeofencePendingIntent(PendingIntent mGeofencePendingIntent){
-        Context context = MapsActivity.getInstance();
+    public static PendingIntent getGeofencePendingIntent(PendingIntent mGeofencePendingIntent, Context context){
 
         // Reuse the PendingIntent if we already have it.
         if (mGeofencePendingIntent != null) {
