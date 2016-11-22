@@ -86,11 +86,12 @@ public class MapManager  implements OnMapReadyCallback, GoogleApiClient.Connecti
 
         mMap = googleMap;
 
-        mGoogleAPIClient = new GoogleApiClient.Builder(MapFragment.getFragmentContext())
-                .addApi(LocationServices.API)
-                .addConnectionCallbacks(this)
-                .addOnConnectionFailedListener(this)
-                .build();
+//        mGoogleAPIClient = new GoogleApiClient.Builder(MapFragment.getFragmentContext())
+//                .addApi(LocationServices.API)
+//                .addConnectionCallbacks(this)
+//                .addOnConnectionFailedListener(this)
+//                .build();
+        mGoogleAPIClient = MapFragment.getGoogleAPIClient();
 
         createLocationRequest();
 
@@ -141,30 +142,36 @@ public class MapManager  implements OnMapReadyCallback, GoogleApiClient.Connecti
             mGeofenceList = new ArrayList<>();
 
             placeAutocompleteFragment = (PlaceAutocompleteFragment) MapFragment.getFragActivity().getFragmentManager().findFragmentById(R.id.searchFragment);
-            placeAutocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
-                @Override
-                public void onPlaceSelected(Place place) {
-                    Log.d(ACTIVITY_NAME, "Selected place Add is : " + place.getAddress().toString());
-                    Log.d(ACTIVITY_NAME, "Selected place LatLng is : " + place.getLatLng().toString());
-                    Log.d(ACTIVITY_NAME, "Selected place Name is : " + place.getName().toString());
-                    clearRedundant();
-                    chosenMarker = mMap.addMarker(new MarkerOptions()
-                            .position(place.getLatLng())
-                            .title(place.getName().toString()));
-                    chosenCircle = mMap.addCircle(new CircleOptions()
-                            .center(place.getLatLng())
-                            .radius(200)
-                            .strokeColor(Color.BLACK)
-                            .fillColor(0x00000000));
-                    mMap.animateCamera(CameraUpdateFactory.newLatLng(place.getLatLng()));
-                }
 
-                @Override
-                public void onError(Status status) {
-                    Toast.makeText(MapFragment.getFragmentContext(), "Cannot find place", Toast.LENGTH_SHORT).show();
-                    Log.e(ACTIVITY_NAME, status.getStatusMessage());
-                }
-            });
+            if(placeAutocompleteFragment != null){
+                placeAutocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
+                    @Override
+                    public void onPlaceSelected(Place place) {
+                        Log.d(ACTIVITY_NAME, "Selected place Add is : " + place.getAddress().toString());
+                        Log.d(ACTIVITY_NAME, "Selected place LatLng is : " + place.getLatLng().toString());
+                        Log.d(ACTIVITY_NAME, "Selected place Name is : " + place.getName().toString());
+                        clearRedundant();
+                        chosenMarker = mMap.addMarker(new MarkerOptions()
+                                .position(place.getLatLng())
+                                .title(place.getName().toString()));
+                        chosenCircle = mMap.addCircle(new CircleOptions()
+                                .center(place.getLatLng())
+                                .radius(200)
+                                .strokeColor(Color.BLACK)
+                                .fillColor(0x00000000));
+                        mMap.animateCamera(CameraUpdateFactory.newLatLng(place.getLatLng()));
+                    }
+
+                    @Override
+                    public void onError(Status status) {
+                        Toast.makeText(MapFragment.getFragmentContext(), "Cannot find place", Toast.LENGTH_SHORT).show();
+                        Log.e(ACTIVITY_NAME, status.getStatusMessage());
+                    }
+                });
+            }
+            else{
+                Log.e(ACTIVITY_NAME, "placeAutocomplete Fragment not loaded");
+            }
             destinationDictionary = new HashMap<Marker, Circle>() {
             };
 

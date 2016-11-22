@@ -47,9 +47,9 @@ public class MapFragment extends Fragment {
     private SupportMapFragment mapFragment;
     private FragmentManager fragmentManager;
 
-    private GoogleApiClient mGoogleAPIClient;
+    private static GoogleApiClient mGoogleAPIClient;
 
-    private GoogleMap mMap;
+    private  GoogleMap mMap;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -63,17 +63,29 @@ public class MapFragment extends Fragment {
         askForLocationPermission();
 //        if (mapManager == null) mapManager = new MapManager();
 
-        /*mGoogleAPIClient = new GoogleApiClient.Builder(context)
-                .addApi(LocationServices.API)
-                .addConnectionCallbacks(mapManager)
-                .addOnConnectionFailedListener(mapManager)
-                .build();*/
 
 //        createLocationRequest();
 
-        Log.i(ACTIVITY_NAME, "Creating MapFragment");
+        Log.i(ACTIVITY_NAME, "Creating MapFragment View");
 
         return view;
+    }
+
+    private void initializeGoogleAPIClient() {
+        Log.i(ACTIVITY_NAME, "Initialize Google API Client");
+        if(mGoogleAPIClient == null){
+
+            mGoogleAPIClient = new GoogleApiClient.Builder(context)
+                    .addApi(LocationServices.API)
+                    .addConnectionCallbacks(mapManager)
+                    .addOnConnectionFailedListener(mapManager)
+                    .build();
+            Log.i(ACTIVITY_NAME, "Created Google API Client");
+        }
+        if(!mGoogleAPIClient.isConnected()) {
+            mGoogleAPIClient.connect();
+            Log.i(ACTIVITY_NAME, "Connected Google API Client");
+        }
     }
 
 //    private void createLocationRequest() {
@@ -89,6 +101,7 @@ public class MapFragment extends Fragment {
     public static Context getFragmentContext() {
         return context;
     }
+    public static GoogleApiClient getGoogleAPIClient(){return mGoogleAPIClient;}
 
     private void askForLocationPermission() {
         if (shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) {
@@ -120,15 +133,21 @@ public class MapFragment extends Fragment {
             Log.d(ACTIVITY_NAME, "Replaced Map Fragment");
         }
         if (mapManager == null) mapManager = new MapManager();
+        initializeGoogleAPIClient();
 
         mapFragment.getMapAsync(mapManager);
-        mapFragment.setRetainInstance(true);
+
+        Log.i(ACTIVITY_NAME, "Called getMapAsync");
+        if(savedInstanceState == null){
+            mapFragment.setRetainInstance(true);
+        }
     }
 
     @Override
     public void onDetach() {
         super.onDetach();
         Log.i(ACTIVITY_NAME, "onDetach()");
+
     }
 
     @Override
@@ -169,6 +188,7 @@ public class MapFragment extends Fragment {
 
     @Override
     public void onDestroyView(){
+        Log.i(ACTIVITY_NAME, "onDestroyView");
         super.onDestroyView();
         MapFragment mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.map);
         if(mapFragment != null){
