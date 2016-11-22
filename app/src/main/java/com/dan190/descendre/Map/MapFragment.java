@@ -22,6 +22,7 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.SupportMapFragment;
 
 import static android.content.Context.LOCATION_SERVICE;
@@ -126,7 +127,11 @@ public class MapFragment extends Fragment {
 
         fragmentManager = getChildFragmentManager();
 
-        mapFragment = (SupportMapFragment) fragmentManager.findFragmentById(R.id.map);
+        if(mapFragment == null){
+            mapFragment = (SupportMapFragment) fragmentManager.findFragmentById(R.id.map);
+            Log.i(ACTIVITY_NAME, "Assigned mapFragment");
+        }
+
         if (mapFragment == null) {
             mapFragment = SupportMapFragment.newInstance();
             fragmentManager.beginTransaction().replace(R.id.map, mapFragment).commit();
@@ -135,9 +140,12 @@ public class MapFragment extends Fragment {
         if (mapManager == null) mapManager = new MapManager();
         initializeGoogleAPIClient();
 
-        mapFragment.getMapAsync(mapManager);
+        Log.d(ACTIVITY_NAME, "MapFragment: " + mapFragment.toString());
+        Log.d(ACTIVITY_NAME, "MapManager: " + mapManager.toString());
 
+        mapFragment.getMapAsync(mapManager);
         Log.i(ACTIVITY_NAME, "Called getMapAsync");
+
         if(savedInstanceState == null){
             mapFragment.setRetainInstance(true);
         }
@@ -187,14 +195,20 @@ public class MapFragment extends Fragment {
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        Log.i(ACTIVITY_NAME, "onResume()");
+    }
+
+    @Override
     public void onDestroyView(){
         Log.i(ACTIVITY_NAME, "onDestroyView");
         super.onDestroyView();
-        MapFragment mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.map);
-        if(mapFragment != null){
-            getFragmentManager().beginTransaction().remove(mapFragment).commit();
-            Log.d(ACTIVITY_NAME, "Removed Map Fragment");
-        }
+//        MapFragment mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.map);
+//        if(mapFragment != null){
+//            getFragmentManager().beginTransaction().remove(mapFragment).commit();
+//            Log.d(ACTIVITY_NAME, "Removed Map Fragment");
+//        }
     }
 
     @Override
