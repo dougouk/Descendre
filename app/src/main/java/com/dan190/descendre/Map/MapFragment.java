@@ -489,6 +489,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
         public void onClick(View v) {
             userState = UserState.DELETING_MARKER;
             clearRedundant();
+            GeofenceManager.removeParticularGeofence(mGoogleAPIClient,
+                    String.format("%#.6f,%#.6f", chosenCircle.getCenter().latitude, chosenCircle.getCenter().latitude));
         }
     };
 

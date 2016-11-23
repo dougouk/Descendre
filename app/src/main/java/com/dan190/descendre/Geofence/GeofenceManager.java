@@ -41,7 +41,7 @@ public class GeofenceManager {
         mGeofenceList.add(new Geofence.Builder()
                 // Set the request ID of the geofence. This is a string to identify this
                 // geofence.
-                .setRequestId(String.format("%f_%f", latlng.latitude, latlng.longitude))
+                .setRequestId(String.format("%#.6f,%#.6f", latlng.latitude, latlng.longitude))
                 .setCircularRegion(
                         latlng.latitude,
                         latlng.longitude,
