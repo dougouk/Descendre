@@ -8,9 +8,6 @@ import android.support.annotation.NonNull;
 import android.util.Log;
 import android.view.View;
 
-import com.dan190.descendre.JobScheduler.AutoUpdate;
-import com.dan190.descendre.MapsActivity;
-import com.dan190.descendre.R;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.location.Geofence;
@@ -23,6 +20,8 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -42,7 +41,7 @@ public class GeofenceManager {
         mGeofenceList.add(new Geofence.Builder()
                 // Set the request ID of the geofence. This is a string to identify this
                 // geofence.
-                .setRequestId(String.format("fd_%f", latlng.latitude, latlng.longitude))
+                .setRequestId(String.format("%f_%f", latlng.latitude, latlng.longitude))
                 .setCircularRegion(
                         latlng.latitude,
                         latlng.longitude,
@@ -53,21 +52,19 @@ public class GeofenceManager {
                             Geofence.GEOFENCE_TRANSITION_EXIT*/)
                 .build());
         Log.d("GeofenceManager" , "Added Geofence");
-        addDestinationToList(map, latlng, destinationDictionary);
+        addDestinationToMyList(map, latlng, destinationDictionary);
     }
 
-    public static void addDestinationToList(GoogleMap mMap,
-                                      LatLng latLng,
-                                      Map<Marker, Circle> destinationDictionary){
+    public static void addDestinationToMyList(GoogleMap mMap,
+                                              LatLng latLng,
+                                              Map<Marker, Circle> destinationDictionary){
         Circle newCircle = mMap.addCircle(new CircleOptions()
                 .center(latLng)
                 .radius(250)
                 .strokeColor(Color.GREEN)
                 .fillColor(0x30CCCCFF));
-        //listOfDestinations_circles.add(newCircle);
 
         Marker newMarker = mMap.addMarker(new MarkerOptions().position(latLng).title("Destination"));
-        //listOfDestinations_markers.add(newMarker);
 
         destinationDictionary.put(newMarker, newCircle);
         Log.d("GeofenceManager", "Added new destination to listOfDestinations");
@@ -95,11 +92,8 @@ public class GeofenceManager {
         }catch (SecurityException securityException) {
             // Catch exception generated if the app does not use ACCESS_FINE_LOCATION permission.
             Log.e(ACTIVITY_NAME, "Need FINE_ACCESS_LOCATION permission");
-//            logSecurityException(securityException);
         }
-//        Toast.makeText(getApplicationContext(), "Geofences added to Google Client",Toast.LENGTH_SHORT).show();
         Log.d(ACTIVITY_NAME, "Geofences added to Google Client");
-        //AutoUpdate.scheduleJob();
     }
 
     public static PendingIntent getGeofencePendingIntent(PendingIntent mGeofencePendingIntent, Context context){
@@ -116,4 +110,13 @@ public class GeofenceManager {
         return PendingIntent.getService(context, 0, intent, PendingIntent.
                 FLAG_UPDATE_CURRENT);
     }
+
+    public static void removeParticularGeofence(GoogleApiClient mGoogleAPIClient, String key){
+        LocationServices.GeofencingApi.removeGeofences(
+                mGoogleAPIClient,
+                new ArrayList<String>(Arrays.asList(key))
+        );
+    }
+
+
 }

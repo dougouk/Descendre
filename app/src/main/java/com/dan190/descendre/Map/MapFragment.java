@@ -31,7 +31,6 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.Geofence;
-import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.places.Place;
@@ -40,7 +39,6 @@ import com.google.android.gms.location.places.ui.PlaceSelectionListener;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.UiSettings;
@@ -52,6 +50,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -233,6 +232,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
         makeGeofenceAtMarker_Button.setOnClickListener(makeGeofenceAtMarkerListener);
         deleteGeofenceAtMarker_Button.setOnClickListener(deleteGeofenceAtMarkerListener);
         usePlacePicker_Button.setOnClickListener(removeGeofencesListener);
+        usePlacePicker_Button.setText("Remove all Geofences");
     }
     private void createLocationRequest() {
         locationRequest = new LocationRequest();
@@ -317,9 +317,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
         }
 //        if (mapManager == null) mapManager = new MapManager();
         initializeGoogleAPIClient();
-
-        Log.d(ACTIVITY_NAME, "MapFragment: " + mapFragment.toString());
-//        Log.d(ACTIVITY_NAME, "MapManager: " + mapManager.toString());
 
         mapFragment.getMapAsync(this);
         Log.i(ACTIVITY_NAME, "Called getMapAsync");
@@ -498,7 +495,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
     private View.OnClickListener removeGeofencesListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            removeGeofences();
+            removeAllGeofences(mGoogleAPIClient);
             Log.i(ACTIVITY_NAME, "Remove Geofences()");
         }
     };
@@ -572,12 +569,13 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
         Log.d(ACTIVITY_NAME, "calling addGeofence(chosenMarker.getPosition())");
     }
 
-    private void removeGeofences(){
+    private void removeAllGeofences(GoogleApiClient mGoogleAPIClient){
         LocationServices.GeofencingApi.removeGeofences(
                 mGoogleAPIClient,
                 GeofenceManager.getGeofencePendingIntent(mGeofencePendingIntent, getContext())).setResultCallback(this);
         Log.d(ACTIVITY_NAME, "Removed Geofences");
     }
+
 
     @Override
     public void onResult(@NonNull Status status) {
