@@ -16,7 +16,6 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
-import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
@@ -35,39 +34,45 @@ public class GeofenceManager {
 
 
     public static void addGeofence(GoogleMap map,
-                            LatLng latlng,
-                            List<Geofence> mGeofenceList,
+                            MyGeofence myGeofence,
+                            List<MyGeofence> myGeofenceList,
                             Map<Marker, Circle> destinationDictionary){
-        mGeofenceList.add(new Geofence.Builder()
+        Geofence newGeofence = new Geofence.Builder()
                 // Set the request ID of the geofence. This is a string to identify this
                 // geofence.
-                .setRequestId(String.format("%#.6f,%#.6f", latlng.latitude, latlng.longitude))
+                .setRequestId(myGeofence.getKey())
                 .setCircularRegion(
-                        latlng.latitude,
-                        latlng.longitude,
+                        myGeofence.getCenter().latitude,
+                        myGeofence.getCenter().longitude,
                         200
                 )
                 .setExpirationDuration(Geofence.NEVER_EXPIRE)
                 .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER /*|
                             Geofence.GEOFENCE_TRANSITION_EXIT*/)
-                .build());
-        Log.d("GeofenceManager" , "Added Geofence");
-        addDestinationToMyList(map, latlng, destinationDictionary);
+                .build();
+        myGeofence.setGeofence(newGeofence);
+        myGeofenceList.add(myGeofence);
+        Log.d("GeofenceManager" , "Added Geofence to myGeofenceList");
+        addDestinationToMyList(map, myGeofence, destinationDictionary);
     }
 
     public static void addDestinationToMyList(GoogleMap mMap,
-                                              LatLng latLng,
+                                              MyGeofence myGeofence,
                                               Map<Marker, Circle> destinationDictionary){
         Circle newCircle = mMap.addCircle(new CircleOptions()
-                .center(latLng)
+                .center(myGeofence.getCenter())
                 .radius(250)
                 .strokeColor(Color.GREEN)
                 .fillColor(0x30CCCCFF));
 
-        Marker newMarker = mMap.addMarker(new MarkerOptions().position(latLng).title("Destination"));
-
-        destinationDictionary.put(newMarker, newCircle);
-        Log.d("GeofenceManager", "Added new destination to listOfDestinations");
+        Marker newMarker = mMap.addMarker(new MarkerOptions().
+                position(myGeofence.getCenter())
+                .title("Destination")
+                );
+        myGeofence.setCircle(newCircle);
+        myGeofence.setMarker(newMarker);
+//        destinationDictionary.put(newMarker, newCircle);
+//        Log.d("GeofenceManager", "Added new destination to listOfDestinations");
     }
 
     private static GeofencingRequest getGeofencingRequest(List<Geofence> mGeofenceList) {
@@ -77,12 +82,16 @@ public class GeofenceManager {
         return builder.build();
     }
     public static void SendGeofence(View v,
-                                    List<Geofence> mGeofenceList,
+                                    List<MyGeofence> myGeofenceList,
                                     GoogleApiClient mGoogleAPIClient,
                                     PendingIntent mGeofencePendingIntent,
                                     Context context,
                                     @NonNull ResultCallback resultCallback){
-        Log.d("GeofenceManager", String.format("Geofence list size : %d", mGeofenceList.size()));
+        Log.d("GeofenceManager", String.format("Geofence list size : %d", myGeofenceList.size()));
+        List<Geofence> mGeofenceList = new ArrayList<>();
+        for (MyGeofence myGeo : myGeofenceList){
+            mGeofenceList.add(myGeo.getGeofence());
+        }
         try{
             LocationServices.GeofencingApi.addGeofences(
                     mGoogleAPIClient,

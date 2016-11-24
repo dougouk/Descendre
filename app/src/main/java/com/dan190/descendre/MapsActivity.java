@@ -23,6 +23,7 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import com.dan190.descendre.Geofence.GeofenceManager;
+import com.dan190.descendre.Geofence.MyGeofence;
 import com.dan190.descendre.Util.UserState;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
@@ -301,8 +302,9 @@ GoogleApiClient.ConnectionCallbacks,
             Log.e(ACTIVITY_NAME, "chosenMarker is null");
             return;
         }
-        GeofenceManager.addGeofence(mMap, chosenMarker.getPosition(), mGeofenceList,destinationDictionary);
-        GeofenceManager.SendGeofence(v, mGeofenceList, mGoogleAPIClient, mGeofencePendingIntent, getApplicationContext(), this);
+//        MyGeofence myGeofence = new MyGeofence(circle.getCenter());
+//        GeofenceManager.addGeofence(mMap, myGeofence, mGeofenceList,destinationDictionary);
+//        GeofenceManager.SendGeofence(v, mGeofenceList, mGoogleAPIClient, mGeofencePendingIntent, getApplicationContext(), this);
 
         Log.d(ACTIVITY_NAME, "calling addGeofence(chosenMarker.getPosition())");
     }

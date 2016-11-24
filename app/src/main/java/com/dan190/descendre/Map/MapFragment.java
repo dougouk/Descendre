@@ -24,6 +24,7 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import com.dan190.descendre.Geofence.GeofenceManager;
+import com.dan190.descendre.Geofence.MyGeofence;
 import com.dan190.descendre.R;
 import com.dan190.descendre.Util.UserState;
 import com.google.android.gms.common.ConnectionResult;
@@ -96,7 +97,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
     private Marker chosenMarker;
     private Circle chosenCircle;
 
-    private List<Geofence> mGeofenceList;
+//    private List<Geofence> mGeofenceList;
+    private List<MyGeofence> myGeofenceList;
     private Map<Marker, Circle> destinationDictionary;
     private boolean isMarkerClickedOnExistingDestination;
     private PendingIntent mGeofencePendingIntent;
@@ -177,7 +179,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
          */
         {
             initializeGoogleAPIClient();
-            mGeofenceList = new ArrayList<>();
+            myGeofenceList = new ArrayList<>();
 
             placeAutocompleteFragment = (PlaceAutocompleteFragment) getActivity().getFragmentManager().findFragmentById(R.id.searchFragment);
 
@@ -489,8 +491,17 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
         public void onClick(View v) {
             userState = UserState.DELETING_MARKER;
             clearRedundant();
-            GeofenceManager.removeParticularGeofence(mGoogleAPIClient,
-                    String.format("%#.6f,%#.6f", chosenCircle.getCenter().latitude, chosenCircle.getCenter().latitude));
+            String key = null;
+            for(MyGeofence chosenGeo : myGeofenceList){
+                if(chosenGeo.getMarker().equals(chosenMarker)){
+                    key = chosenGeo.getKey();
+                }
+            }
+            if(key == null) {
+                Log.w(ACTIVITY_NAME, "Key is null");
+                return;
+            }
+            GeofenceManager.removeParticularGeofence(mGoogleAPIClient, key);
         }
     };
 
@@ -524,15 +535,23 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
             boolean marker_exists_in_dictionary = false;
 
             //check if marker exists in geofence
-            for(Marker m : destinationDictionary.keySet()){
-                if (m.equals(marker)){
+//            for(Marker m : destinationDictionary.keySet()){
+//                if (m.equals(marker)){
+//                    marker_exists_in_dictionary = true;
+//                    chosenMarker = m;
+//                    chosenCircle = destinationDictionary.get(m);
+//                }
+//            }
+            for(MyGeofence myG : myGeofenceList){
+                if(myG.getCenter().equals(marker.getPosition())){
                     marker_exists_in_dictionary = true;
-                    chosenMarker = m;
-                    chosenCircle = destinationDictionary.get(m);
+                    chosenMarker = myG.getMarker();
+                    chosenCircle = myG.getCircle();
                 }
             }
 
             if(marker_exists_in_dictionary){
+                Log.d(ACTIVITY_NAME, "Marker exists in dictionary");
                 isMarkerClickedOnExistingDestination= true;
                 chosenMarker.showInfoWindow();
                 userState = UserState.SELECTING_MARKER;
@@ -540,6 +559,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
                 deleteGeofenceAtMarker_Button.setVisibility(View.VISIBLE);
             }
             else{
+                Log.d(ACTIVITY_NAME, "Marker does not exist in dictionary");
                 makeGeofenceAtMarker_Button.setVisibility(View.VISIBLE);
             }
             Log.d(ACTIVITY_NAME, marker.getTitle() + " clicked");
@@ -565,8 +585,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
             initializeGoogleAPIClient();
         }
         if(!mGoogleAPIClient.isConnected()) return;
-        GeofenceManager.addGeofence(mMap, chosenMarker.getPosition(), mGeofenceList,destinationDictionary);
-        GeofenceManager.SendGeofence(v, mGeofenceList, mGoogleAPIClient, mGeofencePendingIntent, getContext(), this);
+
+        GeofenceManager.addGeofence(mMap, new MyGeofence(chosenCircle.getCenter()), myGeofenceList,destinationDictionary);
+        GeofenceManager.SendGeofence(v, myGeofenceList, mGoogleAPIClient, mGeofencePendingIntent, getContext(), this);
 
         Log.d(ACTIVITY_NAME, "calling addGeofence(chosenMarker.getPosition())");
     }
