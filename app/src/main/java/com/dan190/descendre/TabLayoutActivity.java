@@ -13,12 +13,15 @@ import com.dan190.descendre.Geofence.MyGeofence;
 import com.dan190.descendre.Map.MapFragment;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Dan on 11/11/2016.
  */
 
-public class TabLayoutActivity extends AppCompatActivity implements MapFragment.OnGeofenceListener{
+public class TabLayoutActivity extends AppCompatActivity
+        implements MapFragment.OnGeofenceListener,
+AlarmMonitorFragment.OnAlarmMonitorListener{
     private static String ACTIVITY_NAME = "TabLayoutActivity";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -83,5 +86,26 @@ public class TabLayoutActivity extends AppCompatActivity implements MapFragment.
     @Override
     public void onRemoveGeofence(MyGeofence myGeofence) {
 
+    }
+
+    @Override
+    public void removeAllGeofences() {
+        MapFragment mapFragment = (MapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
+        if(mapFragment == null){
+            Log.w(ACTIVITY_NAME, "mapFragment is null");
+
+            mapFragment = new MapFragment();
+            Bundle args = new Bundle();
+            //??
+
+            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+
+            transaction.replace(R.id.map, mapFragment);
+            transaction.addToBackStack(null);
+            transaction.commit();
+        }
+        else{
+            mapFragment.clearAll();
+        }
     }
 }

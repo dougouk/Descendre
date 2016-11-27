@@ -142,21 +142,21 @@ GoogleApiClient.ConnectionCallbacks,
             }
         });
 
-        Button placePickerButton = (Button) findViewById(R.id.button_placePicker_activity_maps);
-        placePickerButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                PlacePicker.IntentBuilder builder = new PlacePicker.IntentBuilder();
-
-                try{
-                    startActivityForResult(builder.build(instance), PLACE_PICKER_REQUEST);
-                }catch(GooglePlayServicesNotAvailableException e){
-                    e.printStackTrace();
-                }catch(GooglePlayServicesRepairableException e){
-                    e.printStackTrace();
-                }
-            }
-        });
+//        Button placePickerButton = (Button) findViewById(R.id.button_placePicker_activity_maps);
+//        placePickerButton.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                PlacePicker.IntentBuilder builder = new PlacePicker.IntentBuilder();
+//
+//                try{
+//                    startActivityForResult(builder.build(instance), PLACE_PICKER_REQUEST);
+//                }catch(GooglePlayServicesNotAvailableException e){
+//                    e.printStackTrace();
+//                }catch(GooglePlayServicesRepairableException e){
+//                    e.printStackTrace();
+//                }
+//            }
+//        });
         mGeofenceList = new ArrayList<>();
         destinationDictionary = new HashMap<Marker, Circle>() {};
 

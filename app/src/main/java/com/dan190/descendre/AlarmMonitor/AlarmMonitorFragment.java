@@ -8,9 +8,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.TextView;
 
 import com.dan190.descendre.Geofence.MyGeofence;
 import com.dan190.descendre.R;
@@ -23,16 +21,18 @@ import java.util.List;
  */
 
 public class AlarmMonitorFragment extends Fragment {
+    private static String sFragmentName = "ALARM_MONITOR_FRAGMENT";
+
     private ListView listView;
     private static View view;
-    private static String sFragmentName = "ALARM_MONITOR_FRAGMENT";
+    private Button clearAllButton;
+    OnAlarmMonitorListener mAlarmMonitorListener;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
         view = inflater.inflate(R.layout.alarm_monitor_fragment, container, false);
-
-
-
+        clearAllButton = (Button) view.findViewById(R.id.removeAllGeofenceButton);
+        clearAllButton.setOnClickListener(removeAllListener);
         return view;
     }
 
@@ -49,5 +49,24 @@ public class AlarmMonitorFragment extends Fragment {
                 listView.setAdapter(adapter);
             }
         });
+    }
+
+
+    /**
+     * Listener
+     */
+
+    private View.OnClickListener removeAllListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+//            removeAllGeofences(mGoogleAPIClient);
+//            mMap.clear();
+//            Log.i(ACTIVITY_NAME, "Remove ALL Geofences()");
+            mAlarmMonitorListener.removeAllGeofences();
+        }
+    };
+
+    public interface OnAlarmMonitorListener {
+        public void removeAllGeofences();
     }
 }

@@ -86,8 +86,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
      * Used by Map
      */
     private Button makeGeofenceAtMarker_Button,
-            deleteGeofenceAtMarker_Button,
-            usePlacePicker_Button;
+            deleteGeofenceAtMarker_Button
+            ;
 
     private UserState userState;
     private UiSettings mUiSettings;
@@ -233,7 +233,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
 
         makeGeofenceAtMarker_Button = (Button) getActivity().findViewById(R.id.makeGeofenceAtMarker_button);
         deleteGeofenceAtMarker_Button = (Button) getActivity().findViewById(R.id.deleteMarker_button);
-        usePlacePicker_Button = (Button) getActivity().findViewById(R.id.button_placePicker_activity_maps);
+//        usePlacePicker_Button = (Button) getActivity().findViewById(R.id.button_placePicker_activity_maps);
 
         makeGeofenceAtMarker_Button.setVisibility(View.INVISIBLE);
         deleteGeofenceAtMarker_Button.setVisibility(View.INVISIBLE);
@@ -241,8 +241,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
 
         makeGeofenceAtMarker_Button.setOnClickListener(makeGeofenceAtMarkerListener);
         deleteGeofenceAtMarker_Button.setOnClickListener(deleteGeofenceAtMarkerListener);
-        usePlacePicker_Button.setOnClickListener(removeGeofencesListener);
-        usePlacePicker_Button.setText("Remove all Geofences");
+//        usePlacePicker_Button.setOnClickListener(removeGeofencesListener);
+//        usePlacePicker_Button.setText("Remove all Geofences");
     }
     private void createLocationRequest() {
         locationRequest = new LocationRequest();
@@ -446,6 +446,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
     /**
      * Map Modifiers
      */
+    public void clearAll(){
+        mMap.clear();
+    }
     private void clearRedundant(){
         if(userState != UserState.SELECTING_MARKER){
             if(chosenCircle != null) {
@@ -508,14 +511,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
 
     };
 
-    private View.OnClickListener removeGeofencesListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            removeAllGeofences(mGoogleAPIClient);
-            mMap.clear();
-            Log.i(ACTIVITY_NAME, "Remove ALL Geofences()");
-        }
-    };
+
     private GoogleMap.OnMapClickListener onMapClickListener = new GoogleMap.OnMapClickListener(){
         @Override
         public void onMapClick(LatLng latLng){
