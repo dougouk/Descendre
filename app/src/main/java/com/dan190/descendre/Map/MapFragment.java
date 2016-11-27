@@ -512,7 +512,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
         @Override
         public void onClick(View v) {
             removeAllGeofences(mGoogleAPIClient);
-            Log.i(ACTIVITY_NAME, "Remove Geofences()");
+            mMap.clear();
+            Log.i(ACTIVITY_NAME, "Remove ALL Geofences()");
         }
     };
     private GoogleMap.OnMapClickListener onMapClickListener = new GoogleMap.OnMapClickListener(){
