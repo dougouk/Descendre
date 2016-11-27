@@ -174,9 +174,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
         mMap.setOnMarkerClickListener(onMarkerClickListener);
 
         if(locationLocation != null){
-            chosenMarker = mMap.addMarker(new MarkerOptions().position(
-                    new LatLng(locationLocation.getLatitude(), locationLocation.getLongitude())
-            ).title("You are here!"));
+//            chosenMarker = mMap.addMarker(new MarkerOptions().position(
+//                    new LatLng(locationLocation.getLatitude(), locationLocation.getLongitude())
+//            ).title("You are here!"));
             changeCamera(CameraUpdateFactory.newCameraPosition(CameraPosition.fromLatLngZoom(
                     new LatLng(locationLocation.getLatitude(), locationLocation.getLongitude()), 15)));
 
