@@ -31,7 +31,6 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
-import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.places.Place;
@@ -51,7 +50,6 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -77,11 +75,11 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
     private String provider;
 
 //    private MapManager mapManager;
-    private SupportMapFragment mapFragment;
+    private SupportMapFragment supportMapFragment;
     private FragmentManager fragmentManager;
 
     private static GoogleApiClient mGoogleAPIClient;
-
+    private static MapFragment mapFragment;
     private  GoogleMap mMap;
 
     /**
@@ -105,9 +103,19 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
 
     private PlaceAutocompleteFragment placeAutocompleteFragment;
 
+    /**
+     * Member variable for sharing data between fragments
+     */
+    OnGeofenceListener mOnGeofenceListener;
 
+    /**
+     * Interface for sharing data between fragments
+     */
 
-
+    public interface OnGeofenceListener{
+        public void onCreateGeofence(List<MyGeofence> myGeofencesList);
+        public void onRemoveGeofence(MyGeofence myGeofence);
+    }
     private void initializeGoogleAPIClient() {
         Log.i(ACTIVITY_NAME, "Initialize Google API Client");
         if(mGoogleAPIClient == null){
@@ -264,8 +272,12 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        //mapFragment.isVisible();
         Log.i(ACTIVITY_NAME, "onAttach()");
+        try{
+            mOnGeofenceListener = (OnGeofenceListener) context;
+        }catch(ClassCastException e){
+            throw new ClassCastException(context.toString() + " must implement OnGeofenceListener");
+        }
     }
     @Override
     public void onCreate(Bundle savedInstance){
@@ -294,6 +306,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
 
         activity = getActivity();
         context = getContext();
+        mapFragment = this;
 
         askForLocationPermission();
 
@@ -307,24 +320,24 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
 
         fragmentManager = getFragmentManager();
 
-        if(mapFragment == null){
-            mapFragment = (SupportMapFragment) fragmentManager.findFragmentById(R.id.map);
-            Log.i(ACTIVITY_NAME, "Assigned mapFragment");
+        if(supportMapFragment == null){
+            supportMapFragment = (SupportMapFragment) fragmentManager.findFragmentById(R.id.map);
+            Log.i(ACTIVITY_NAME, "Assigned supportMapFragment");
         }
 
-        if (mapFragment == null) {
-            mapFragment = SupportMapFragment.newInstance();
-            fragmentManager.beginTransaction().replace(R.id.map, mapFragment).commit();
+        if (supportMapFragment == null) {
+            supportMapFragment = SupportMapFragment.newInstance();
+            fragmentManager.beginTransaction().replace(R.id.map, supportMapFragment).commit();
             Log.d(ACTIVITY_NAME, "Replaced Map Fragment");
         }
 //        if (mapManager == null) mapManager = new MapManager();
         initializeGoogleAPIClient();
 
-        mapFragment.getMapAsync(this);
+        supportMapFragment.getMapAsync(this);
         Log.i(ACTIVITY_NAME, "Called getMapAsync");
 
         if(savedInstanceState == null){
-            mapFragment.setRetainInstance(true);
+            supportMapFragment.setRetainInstance(true);
         }
     }
     @Override
@@ -396,9 +409,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
     public void onDestroyView(){
         Log.i(ACTIVITY_NAME, "onDestroyView()");
         super.onDestroyView();
-//        MapFragment mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.map);
-//        if(mapFragment != null){
-//            getFragmentManager().beginTransaction().remove(mapFragment).commit();
+//        MapFragment supportMapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.map);
+//        if(supportMapFragment != null){
+//            getFragmentManager().beginTransaction().remove(supportMapFragment).commit();
 //            Log.d(ACTIVITY_NAME, "Removed Map Fragment");
 //        }
     }
@@ -489,20 +502,10 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
     private View.OnClickListener deleteGeofenceAtMarkerListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            userState = UserState.DELETING_MARKER;
-            clearRedundant();
-            String key = null;
-            for(MyGeofence chosenGeo : myGeofenceList){
-                if(chosenGeo.getMarker().equals(chosenMarker)){
-                    key = chosenGeo.getKey();
-                }
-            }
-            if(key == null) {
-                Log.w(ACTIVITY_NAME, "Key is null");
-                return;
-            }
-            GeofenceManager.removeParticularGeofence(mGoogleAPIClient, key);
+            deleteGeofenceOnMap();
         }
+
+
     };
 
     private View.OnClickListener removeGeofencesListener = new View.OnClickListener() {
@@ -574,6 +577,25 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
      * Geofence
      */
 
+    public static MapFragment getMapFragment(){
+        return mapFragment;
+    }
+    public void deleteGeofenceOnMap() {
+        userState = UserState.DELETING_MARKER;
+        clearRedundant();
+        String key = null;
+        for(MyGeofence chosenGeo : myGeofenceList){
+            if(chosenGeo.getMarker().equals(chosenMarker)){
+                key = chosenGeo.getKey();
+            }
+        }
+        if(key == null) {
+            Log.w(ACTIVITY_NAME, "Key is null");
+            return;
+        }
+        GeofenceManager.removeParticularGeofence(mGoogleAPIClient, key);
+    }
+
     private void AddGeofenceAtLocation(View v){
         if(chosenMarker.getPosition() == null){
             Log.e(ACTIVITY_NAME, "chosenMarker is null");
@@ -586,9 +608,18 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
         }
         if(!mGoogleAPIClient.isConnected()) return;
 
-        GeofenceManager.addGeofence(mMap, new MyGeofence(chosenCircle.getCenter()), myGeofenceList,destinationDictionary);
+        MyGeofence newGeofence = new MyGeofence(chosenCircle.getCenter());
+
+        float[] distanceArray = new float[1];
+        Location.distanceBetween(chosenCircle.getCenter().latitude, chosenCircle.getCenter().longitude,
+                locationLocation.getLatitude(), locationLocation.getLongitude(),
+                distanceArray);
+        float distance = distanceArray[0];
+        newGeofence.setDistance(distance);
+        GeofenceManager.addGeofence(mMap, newGeofence, myGeofenceList,destinationDictionary);
         GeofenceManager.SendGeofence(v, myGeofenceList, mGoogleAPIClient, mGeofencePendingIntent, getContext(), this);
 
+        mOnGeofenceListener.onCreateGeofence(myGeofenceList);
         Log.d(ACTIVITY_NAME, "calling addGeofence(chosenMarker.getPosition())");
     }
 

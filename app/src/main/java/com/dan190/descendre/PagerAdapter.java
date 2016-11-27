@@ -4,6 +4,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 
+import com.dan190.descendre.AlarmMonitor.AlarmMonitorFragment;
 import com.dan190.descendre.Map.MapFragment;
 import com.dan190.descendre.Settings.SettingsFragment;
 

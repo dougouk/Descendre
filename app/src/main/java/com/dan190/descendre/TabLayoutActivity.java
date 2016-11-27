@@ -2,16 +2,23 @@ package com.dan190.descendre;
 
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 
+import com.dan190.descendre.AlarmMonitor.AlarmMonitorFragment;
+import com.dan190.descendre.Geofence.MyGeofence;
+import com.dan190.descendre.Map.MapFragment;
+
+import java.util.List;
+
 /**
  * Created by Dan on 11/11/2016.
  */
 
-public class TabLayoutActivity extends AppCompatActivity {
+public class TabLayoutActivity extends AppCompatActivity implements MapFragment.OnGeofenceListener{
     private static String ACTIVITY_NAME = "TabLayoutActivity";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,5 +53,35 @@ public class TabLayoutActivity extends AppCompatActivity {
 
             }
         });
+    }
+
+    @Override
+    public void onCreateGeofence(List<MyGeofence> myGeofenceList) {
+        Log.d("TabLayoutAcitivty", "onCreateGeofence()");
+
+        AlarmMonitorFragment alarmMonitorFragment = (AlarmMonitorFragment)
+                getSupportFragmentManager().findFragmentById(R.id.alarmMonitorFragment);
+
+        if(alarmMonitorFragment == null){
+            Log.w(ACTIVITY_NAME, "alarmMonitorFragment is null");
+
+            alarmMonitorFragment = new AlarmMonitorFragment();
+            Bundle args = new Bundle();
+            //??
+
+            FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+
+            transaction.replace(R.id.alarmMonitorFragment, alarmMonitorFragment);
+            transaction.addToBackStack(null);
+            transaction.commit();
+        }
+        else{
+            alarmMonitorFragment.setListView(myGeofenceList);
+        }
+    }
+
+    @Override
+    public void onRemoveGeofence(MyGeofence myGeofence) {
+
     }
 }

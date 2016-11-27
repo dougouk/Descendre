@@ -18,6 +18,10 @@ public class MyGeofence {
     private Circle circle;
     private Geofence geofence;
     private LatLng latLngCenter;
+    private String address;
+    private float distance;
+
+
 
     public MyGeofence(LatLng latLng){
 //        this.marker = marker;
@@ -62,5 +66,17 @@ public class MyGeofence {
     }
     public String getKey(){
         return key;
+    }
+
+    public String getAddress(){
+        return address;
+    }
+
+    public float getDistance() {
+        return distance;
+    }
+
+    public void setDistance(float distance) {
+        this.distance = distance;
     }
 }
