@@ -1,24 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:orientation="vertical" android:layout_width="match_parent"
-    android:layout_height="match_parent">
-
-
-    <Button
-        android:text="My Map"
+    android:layout_height="match_parent"
+    android:id="@+id/alarmMonitorFragment">
+    <ListView
+        android:id="@+id/geofenceList"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/button_myMap" />
-
+        android:text="Alarm Monitor Fragment"/>
     <Button
-    android:text="PlacePicker"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:id="@+id/button_placePicker" />
-
-    <Button
-        android:text="3 Sliding views"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:id="@+id/button_slidingViews" />
+        android:layout_gravity="bottom"
+        android:id="@+id/removeAllGeofenceButton"
+        android:text="REMOVE ALL"/>
+
 </LinearLayout>

@@ -6,7 +6,6 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Camera;
 import android.graphics.Color;
 import android.location.Criteria;
 import android.location.Location;
@@ -24,6 +23,8 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import com.dan190.descendre.Geofence.GeofenceManager;
+import com.dan190.descendre.Geofence.MyGeofence;
+import com.dan190.descendre.Util.UserState;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
 import com.google.android.gms.common.GooglePlayServicesRepairableException;
@@ -141,21 +142,21 @@ GoogleApiClient.ConnectionCallbacks,
             }
         });
 
-        Button placePickerButton = (Button) findViewById(R.id.button_placePicker_activity_maps);
-        placePickerButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                PlacePicker.IntentBuilder builder = new PlacePicker.IntentBuilder();
-
-                try{
-                    startActivityForResult(builder.build(instance), PLACE_PICKER_REQUEST);
-                }catch(GooglePlayServicesNotAvailableException e){
-                    e.printStackTrace();
-                }catch(GooglePlayServicesRepairableException e){
-                    e.printStackTrace();
-                }
-            }
-        });
+//        Button placePickerButton = (Button) findViewById(R.id.button_placePicker_activity_maps);
+//        placePickerButton.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                PlacePicker.IntentBuilder builder = new PlacePicker.IntentBuilder();
+//
+//                try{
+//                    startActivityForResult(builder.build(instance), PLACE_PICKER_REQUEST);
+//                }catch(GooglePlayServicesNotAvailableException e){
+//                    e.printStackTrace();
+//                }catch(GooglePlayServicesRepairableException e){
+//                    e.printStackTrace();
+//                }
+//            }
+//        });
         mGeofenceList = new ArrayList<>();
         destinationDictionary = new HashMap<Marker, Circle>() {};
 
@@ -301,8 +302,9 @@ GoogleApiClient.ConnectionCallbacks,
             Log.e(ACTIVITY_NAME, "chosenMarker is null");
             return;
         }
-        GeofenceManager.addGeofence(mMap, chosenMarker.getPosition(), mGeofenceList,destinationDictionary);
-        GeofenceManager.SendGeofence(v, mGeofenceList, mGoogleAPIClient, mGeofencePendingIntent);
+//        MyGeofence myGeofence = new MyGeofence(circle.getCenter());
+//        GeofenceManager.addGeofence(mMap, myGeofence, mGeofenceList,destinationDictionary);
+//        GeofenceManager.SendGeofence(v, mGeofenceList, mGoogleAPIClient, mGeofencePendingIntent, getApplicationContext(), this);
 
         Log.d(ACTIVITY_NAME, "calling addGeofence(chosenMarker.getPosition())");
     }
@@ -500,7 +502,7 @@ GoogleApiClient.ConnectionCallbacks,
     private void removeGeofences(){
         LocationServices.GeofencingApi.removeGeofences(
                 mGoogleAPIClient,
-                GeofenceManager.getGeofencePendingIntent(mGeofencePendingIntent)).setResultCallback(this);
+                GeofenceManager.getGeofencePendingIntent(mGeofencePendingIntent, getApplicationContext())).setResultCallback(this);
         Log.d(ACTIVITY_NAME, "Removed Geofences");
     }
 
