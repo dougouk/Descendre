@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Criteria;
@@ -496,9 +497,10 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
     private View.OnClickListener makeGeofenceAtMarkerListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            AddGeofenceAtLocation(v);
-            userState = UserState.ADDING_MARKER;
-            clearRedundant();
+//            AddGeofenceAtLocation(v);
+//            userState = UserState.ADDING_MARKER;
+//            clearRedundant();
+            startActivity(new Intent(getContext(), DirectionsFragment.class));
         }
     };
 

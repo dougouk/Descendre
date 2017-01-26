@@ -5,6 +5,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 
 import com.dan190.descendre.AlarmMonitor.AlarmMonitorFragment;
+import com.dan190.descendre.Map.DirectionsFragment;
 import com.dan190.descendre.Map.MapFragment;
 import com.dan190.descendre.Settings.SettingsFragment;
 
@@ -15,7 +16,7 @@ import com.dan190.descendre.Settings.SettingsFragment;
 public class PagerAdapter extends FragmentStatePagerAdapter {
     int mNumOfTabs;
 
-    Fragment[] fragments = new Fragment[3];
+    Fragment[] fragments = new Fragment[4];
 
     public PagerAdapter(FragmentManager fragmentManager, int mNumOfTabs){
         super(fragmentManager);
@@ -29,11 +30,14 @@ public class PagerAdapter extends FragmentStatePagerAdapter {
                     MapFragment tab1 = new MapFragment();
                     return tab1;
                 case 1:
-                    AlarmMonitorFragment tab2 = new AlarmMonitorFragment();
+                    DirectionsFragment tab2 = new DirectionsFragment();
                     return tab2;
                 case 2:
-                    SettingsFragment tab3 = new SettingsFragment();
+                    AlarmMonitorFragment tab3 = new AlarmMonitorFragment();
                     return tab3;
+                case 3:
+                    SettingsFragment tab4 = new SettingsFragment();
+                    return tab4;
                 default:
                     return null;
             }

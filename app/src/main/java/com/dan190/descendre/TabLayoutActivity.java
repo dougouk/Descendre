@@ -32,6 +32,7 @@ AlarmMonitorFragment.OnAlarmMonitorListener{
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tab_layout);
         tabLayout.addTab(tabLayout.newTab().setIcon(R.drawable.map_icon));
         tabLayout.addTab(tabLayout.newTab().setIcon(R.drawable.bus_stop2));
+        tabLayout.addTab(tabLayout.newTab().setIcon(R.drawable.alarm));
         tabLayout.addTab(tabLayout.newTab().setIcon(R.drawable.settings));
         tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
 

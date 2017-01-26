@@ -23,11 +23,9 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import com.dan190.descendre.Geofence.GeofenceManager;
-import com.dan190.descendre.Geofence.MyGeofence;
+import com.dan190.descendre.Map.DirectionsFragment;
 import com.dan190.descendre.Util.UserState;
 import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
-import com.google.android.gms.common.GooglePlayServicesRepairableException;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.Result;
 import com.google.android.gms.common.api.ResultCallback;
@@ -127,9 +125,12 @@ GoogleApiClient.ConnectionCallbacks,
             @Override
             public void onClick(View v) {
                 Log.d(ACTIVITY_NAME, "setMarkerAsDestinationButton clicked");
-                AddGeofenceAtLocation(v);
-                userState = UserState.ADDING_MARKER;
-                clearRedundant();
+//                AddGeofenceAtLocation(v);
+//                userState = UserState.ADDING_MARKER;
+//                clearRedundant();
+                Intent intent = new Intent(getApplicationContext(), DirectionsFragment.class);
+                startActivity(intent);
+
             }
         });
         deleteMarkerButton = (Button) findViewById(R.id.deleteMarker_button);
@@ -341,7 +342,7 @@ GoogleApiClient.ConnectionCallbacks,
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
 
                     // permission was granted, yay! Do the
-                    // contacts-related task you need to do.
+                    // contacts-related task you nee    d to do.
                     Toast.makeText(getApplicationContext(), "Permission Granted", Toast.LENGTH_SHORT).show();
 
                 } else {
