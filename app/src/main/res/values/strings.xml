@@ -11,4 +11,7 @@
     <string name="geofence_transition_exited">Exited geofence zone!!</string>
     <string name="unknown_geofence_transition">Unknown geofence transition</string>
     <string name="geofence_transition_invalid_type">Invalid geofence transition</string>
+    <string name="getDirections">Get Directions</string>
+    <string name="deleteMarker">Delete selected point</string>
+    <string name="setAlarm">Set alarm at location</string>
 </resources>
