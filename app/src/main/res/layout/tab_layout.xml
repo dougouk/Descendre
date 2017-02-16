@@ -17,4 +17,26 @@
         android:layout_height="fill_parent"
         android:layout_below="@id/tab_layout"/>
 
+    <FrameLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:id="@+id/frameContainer">
+        <!--<fragment
+            android:id="@+id/map"
+            android:name="com.google.android.gms.maps.SupportMapFragment"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            tools:context="com.dan190.descendre.MapsActivity" />-->
+        <!--<Button-->
+        <!--android:id="@+id/button_placePicker_activity_maps"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_gravity="bottom"-->
+        <!--android:text="Use PlacePicker"/>-->
+
+
+
+    </FrameLayout>
+
 </RelativeLayout>
