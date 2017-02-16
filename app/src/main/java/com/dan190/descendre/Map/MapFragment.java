@@ -4,7 +4,6 @@ import android.Manifest;
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.Context;
-import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.location.Criteria;
@@ -13,9 +12,11 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.InflateException;
 import android.view.LayoutInflater;
@@ -62,14 +63,18 @@ import static android.content.Context.LOCATION_SERVICE;
  */
 
 public class MapFragment extends Fragment implements OnMapReadyCallback, ResultCallback<Status>, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
-    static final String ACTIVITY_NAME = "MAP_FRAGMENT";
+    static final String TAG = MapFragment.class.getName();
+
+    public static String mapFragmentKey = "map";
 
     private static View view;
     private  Context context;
     private  Activity activity;
 
     private LocationManager locationManager;
-    private Location locationLocation;
+    private static Location lastKnownLocation;
+
+
     private LocationRequest locationRequest;
     private MyLocationListener myLocationListener;
 
@@ -87,8 +92,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
      * Used by Map
      */
     private Button makeGeofenceAtMarker_Button,
-            deleteGeofenceAtMarker_Button
-            ;
+            deleteGeofenceAtMarker_Button, getDirectionsButton;
 
     private UserState userState;
     private UiSettings mUiSettings;
@@ -118,7 +122,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
         public void onRemoveGeofence(MyGeofence myGeofence);
     }
     private void initializeGoogleAPIClient() {
-        Log.i(ACTIVITY_NAME, "Initialize Google API Client");
+        Log.i(TAG, "Initialize Google API Client");
         if(mGoogleAPIClient == null){
 
             mGoogleAPIClient = new GoogleApiClient.Builder(context)
@@ -126,36 +130,47 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
                     .addConnectionCallbacks(this)
                     .addOnConnectionFailedListener(this)
                     .build();
-            Log.i(ACTIVITY_NAME, "Created Google API Client");
+            Log.i(TAG, "Created Google API Client");
         }
         if(!mGoogleAPIClient.isConnected()) {
             mGoogleAPIClient.connect();
-            Log.i(ACTIVITY_NAME, "Connected Google API Client");
+            Log.i(TAG, "Connected Google API Client");
         }
+    }
+
+    /** Getters and Setters
+     *
+     */
+
+
+    public static Location getLastKnownLocation() {
+        return lastKnownLocation;
+    }
+
+    public static void setLastKnownLocation(Location lastKnownLocation) {
+        MapFragment.lastKnownLocation = lastKnownLocation;
     }
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        Log.i(ACTIVITY_NAME, "onMapReady()");
+        initializeGoogleAPIClient();
+
+        Log.i(TAG, "onMapReady()");
 
         mMap = googleMap;
 
         mGoogleAPIClient = MapFragment.getGoogleAPIClient();
 
+        if(ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED){
+            askForLocationPermission();
+        }
         createLocationRequest();
 
         myLocationListener = new MyLocationListener();
-        locationManager = (LocationManager) getActivity()
+        locationManager  = (LocationManager) getActivity()
                 .getSystemService(LOCATION_SERVICE);
-        provider = locationManager.getBestProvider(new Criteria(), true);
-
-        try{
-            if(provider != null){
-                locationLocation = locationManager.getLastKnownLocation(provider);
-            }
-        }catch (SecurityException e){
-            Log.e(ACTIVITY_NAME, e.getMessage());
-        }
+        updateLastKnownLocation();
 
 
 
@@ -163,23 +178,29 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
 
         mUiSettings.setZoomControlsEnabled(true);
         mUiSettings.setMapToolbarEnabled(true);
+        mUiSettings.setCompassEnabled(true);
+//        mUiSettings.setMyLocationButtonEnabled(true);
 
         try{
             mMap.setMyLocationEnabled(true);
+            Log.d(TAG, "set my location");
         }catch(SecurityException e){
-            Log.e(ACTIVITY_NAME, "Needs Location Permission");
+            Log.e(TAG, "Needs Location Permission");
+            Snackbar snackbar = Snackbar.make(view, "Needs location permission to get your location",
+                    Snackbar.LENGTH_LONG);
+            snackbar.show();
         }
 
         mMap.setOnMapClickListener(onMapClickListener);
         mMap.setOnMapLongClickListener(onMapLongClickListener);
         mMap.setOnMarkerClickListener(onMarkerClickListener);
 
-        if(locationLocation != null){
+        if(lastKnownLocation != null){
 //            chosenMarker = mMap.addMarker(new MarkerOptions().position(
-//                    new LatLng(locationLocation.getLatitude(), locationLocation.getLongitude())
+//                    new LatLng(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude())
 //            ).title("You are here!"));
             changeCamera(CameraUpdateFactory.newCameraPosition(CameraPosition.fromLatLngZoom(
-                    new LatLng(locationLocation.getLatitude(), locationLocation.getLongitude()), 15)));
+                    new LatLng(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude()), 15)));
 
         }
 
@@ -187,7 +208,6 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
          * Non Map-Related Instantiations
          */
         {
-            initializeGoogleAPIClient();
             myGeofenceList = new ArrayList<>();
 
             placeAutocompleteFragment = (PlaceAutocompleteFragment) getActivity().getFragmentManager().findFragmentById(R.id.searchFragment);
@@ -196,9 +216,9 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
                 placeAutocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
                     @Override
                     public void onPlaceSelected(Place place) {
-                        Log.d(ACTIVITY_NAME, "Selected place Add is : " + place.getAddress().toString());
-                        Log.d(ACTIVITY_NAME, "Selected place LatLng is : " + place.getLatLng().toString());
-                        Log.d(ACTIVITY_NAME, "Selected place Name is : " + place.getName().toString());
+                        Log.d(TAG, "Selected place Add is : " + place.getAddress().toString());
+                        Log.d(TAG, "Selected place LatLng is : " + place.getLatLng().toString());
+                        Log.d(TAG, "Selected place Name is : " + place.getName().toString());
                         clearRedundant();
                         chosenMarker = mMap.addMarker(new MarkerOptions()
                                 .position(place.getLatLng())
@@ -214,12 +234,12 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
                     @Override
                     public void onError(Status status) {
                         Toast.makeText(getContext(), "Cannot find place", Toast.LENGTH_SHORT).show();
-                        Log.e(ACTIVITY_NAME, status.getStatusMessage());
+                        Log.e(TAG, status.getStatusMessage());
                     }
                 });
             }
             else{
-                Log.e(ACTIVITY_NAME, "placeAutocomplete Fragment not loaded");
+                Log.e(TAG, "placeAutocomplete Fragment not loaded");
             }
             destinationDictionary = new HashMap<Marker, Circle>() {
             };
@@ -230,18 +250,37 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
         }
     }
 
+    private void updateLastKnownLocation() {
+        provider = locationManager.getBestProvider(new Criteria(), true);
+
+        try{
+            if(provider != null){
+                lastKnownLocation = locationManager.getLastKnownLocation(provider);
+//                Log.i(TAG, "last known location : " + lastKnownLocation.toString());
+            }
+            else{
+                Log.e(TAG, "provider is NULL");
+            }
+        }catch (SecurityException e){
+            Log.e(TAG, e.getMessage());
+        }
+    }
+
     private void assignButtons(){
 
-        makeGeofenceAtMarker_Button = (Button) getActivity().findViewById(R.id.makeGeofenceAtMarker_button);
-        deleteGeofenceAtMarker_Button = (Button) getActivity().findViewById(R.id.deleteMarker_button);
+//        makeGeofenceAtMarker_Button = (Button) getActivity().findViewById(R.id.makeGeofenceAtMarker_button);
+//        deleteGeofenceAtMarker_Button = (Button) getActivity().findViewById(R.id.deleteMarker_button);
+        getDirectionsButton = (Button) getActivity().findViewById(R.id.getDirectionsButton);
 //        usePlacePicker_Button = (Button) getActivity().findViewById(R.id.button_placePicker_activity_maps);
 
         makeGeofenceAtMarker_Button.setVisibility(View.INVISIBLE);
         deleteGeofenceAtMarker_Button.setVisibility(View.INVISIBLE);
+        getDirectionsButton.setVisibility(View.INVISIBLE);
 //        usePlacePicker_Button.setVisibility(View.INVISIBLE);
 
         makeGeofenceAtMarker_Button.setOnClickListener(makeGeofenceAtMarkerListener);
         deleteGeofenceAtMarker_Button.setOnClickListener(deleteGeofenceAtMarkerListener);
+        getDirectionsButton.setOnClickListener(getDirectionsListener);
 //        usePlacePicker_Button.setOnClickListener(removeGeofencesListener);
 //        usePlacePicker_Button.setText("Remove all Geofences");
     }
@@ -256,8 +295,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
 
     private void askForLocationPermission() {
         if (shouldShowRequestPermissionRationale(Manifest.permission.ACCESS_FINE_LOCATION)) {
-            //has already seen permission
-            Log.i(ACTIVITY_NAME, "Has Already seen permission");
+            // Explain to the user why they need to provide location permission
+            Log.i(TAG, "Should show permission rationale");
             if (ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
                     && ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED){
                 requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
@@ -266,14 +305,14 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
 
         } else {
             requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
-            Log.i(ACTIVITY_NAME, "Permission Granted");
+            Log.i(TAG, "Permission Requested");
         }
     }
 
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        Log.i(ACTIVITY_NAME, "onAttach()");
+        Log.i(TAG, "onAttach()");
         try{
             mOnGeofenceListener = (OnGeofenceListener) context;
         }catch(ClassCastException e){
@@ -283,17 +322,17 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
     @Override
     public void onCreate(Bundle savedInstance){
         super.onCreate(savedInstance);
-        Log.i(ACTIVITY_NAME, "onCreate()");
+        Log.i(TAG, "onCreate()");
     }
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        Log.i(ACTIVITY_NAME, "onCreateView()");
+        Log.i(TAG, "onCreateView()");
 
         if(view != null){
             ViewGroup parent = (ViewGroup) view.getParent();
             if(parent != null){
                 parent.removeView(view);
-                Log.d(ACTIVITY_NAME, "Removing pre-existing view from parent");
+                Log.d(TAG, "Removing pre-existing view from parent");
             }
         }
         try{
@@ -309,7 +348,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
         context = getContext();
         mapFragment = this;
 
-        askForLocationPermission();
+
+//        askForLocationPermission();
 
 
         return view;
@@ -317,104 +357,76 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        Log.i(ACTIVITY_NAME, "onActivityCreated()");
+        Log.i(TAG, "onActivityCreated()");
 
         fragmentManager = getFragmentManager();
 
-        if(supportMapFragment == null){
-            supportMapFragment = (SupportMapFragment) fragmentManager.findFragmentById(R.id.map);
-            Log.i(ACTIVITY_NAME, "Assigned supportMapFragment");
-        }
-
         if (supportMapFragment == null) {
-            supportMapFragment = SupportMapFragment.newInstance();
-            fragmentManager.beginTransaction().replace(R.id.map, supportMapFragment).commit();
-            Log.d(ACTIVITY_NAME, "Replaced Map Fragment");
-        }
-//        if (mapManager == null) mapManager = new MapManager();
-        initializeGoogleAPIClient();
-
-        supportMapFragment.getMapAsync(this);
-        Log.i(ACTIVITY_NAME, "Called getMapAsync");
-
-        if(savedInstanceState == null){
-            supportMapFragment.setRetainInstance(true);
+//            supportMapFragment = SupportMapFragment.newInstance();
+//            supportMapFragment = (SupportMapFragment) getFragmentManager().findFragmentById(R.id.maps);
+//            com.google.android.gms.maps.MapFragment mapFragment = new com.google.android.gms.maps.MapFragment();
+//            Log.d(TAG, supportMapFragment.toString());
+            fragmentManager.beginTransaction()
+                    .add(R.id.frameContainer, supportMapFragment, mapFragmentKey)
+                    .commit();
+            supportMapFragment.getMapAsync(this);
+            Log.i(TAG, "Called getMapAsync");
         }
     }
     @Override
     public void onStart() {
         super.onStart();
-/*        if (!mGoogleAPIClient.isConnected()) {
-            mGoogleAPIClient.connect();
-        }
-        locationManager = (LocationManager) getFragActivity().getSystemService(LOCATION_SERVICE);
-        provider = locationManager.getBestProvider(new Criteria(), true);
-        try {
-            if (provider != null) {
-                if (ActivityCompat.checkSelfPermission(getFragActivity(), Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
-                        && ActivityCompat.checkSelfPermission(getFragActivity(), Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-                    //    ActivityCompat#requestPermissions
-                    // here to request the missing permissions, and then overriding
-                    //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-                    //                                          int[] grantResults)
-                    // to handle the case where the user grants the permission. See the documentation
-                    // for ActivityCompat#requestPermissions for more details.
-
-                    askForLocationPermission();
-                    return;
-                }
-                locationLocation = locationManager.getLastKnownLocation(provider);
-            }
-        } catch (SecurityException e) {
-            Log.e(ACTIVITY_NAME, e.getMessage());
-        }*/
     }
 
     @Override
     public void onResume() {
         super.onResume();
-        Log.i(ACTIVITY_NAME, "onResume()");
-        if(!mGoogleAPIClient.isConnected()){
-            mGoogleAPIClient.connect();
-        }
+        Log.i(TAG, "onResume()");
+        initializeGoogleAPIClient();
     }
 
     @Override
     public void onPause(){
         super.onPause();
-        Log.i(ACTIVITY_NAME, "onPause()");
+        Log.i(TAG, "onPause()");
     }
 
     @Override
     public void onStop(){
         super.onStop();
-        Log.i(ACTIVITY_NAME, "onStop()");
+        Log.i(TAG, "onStop()");
+        removeMapFragmentFromContainer();
+
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        Log.i(ACTIVITY_NAME, "onDestroy()");
+        Log.i(TAG, "onDestroy()");
         if(mGoogleAPIClient != null) mGoogleAPIClient.disconnect();
+
     }
+
+    private void removeMapFragmentFromContainer() {
+        android.app.Fragment fragment = getActivity().getFragmentManager().findFragmentByTag(mapFragmentKey);
+        if(fragment!= null){
+            Log.d(TAG, "Fragment is null");
+            getActivity().getFragmentManager().beginTransaction()
+                    .remove(fragment);
+        }
+    }
+
     @Override
     public void onDetach() {
         super.onDetach();
-        Log.i(ACTIVITY_NAME, "onDetach()");
+        Log.i(TAG, "onDetach()");
 
     }
 
-
-
     @Override
     public void onDestroyView(){
-        Log.i(ACTIVITY_NAME, "onDestroyView()");
+        Log.i(TAG, "onDestroyView()");
         super.onDestroyView();
-//        MapFragment supportMapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.map);
-//        if(supportMapFragment != null){
-//            getFragmentManager().beginTransaction().remove(supportMapFragment).commit();
-//            Log.d(ACTIVITY_NAME, "Removed Map Fragment");
-//        }
     }
 
     @Override
@@ -428,13 +440,18 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
 
                     // permission was granted, yay! Do the
                     // contacts-related task you need to do.
-                    Toast.makeText(getContext(), "Permission Granted", Toast.LENGTH_SHORT).show();
+                    try{
+                        mMap.setMyLocationEnabled(true);
+                    }catch(SecurityException e){
+                        e.printStackTrace();
+                    }
+                    Toast.makeText(getContext(), "Location Permission Granted", Toast.LENGTH_SHORT).show();
 
                 } else {
 
                     // permission denied, boo! Disable the
                     // functionality that depends on this permission.
-                    Toast.makeText(getContext(), "Permission Denied", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "Location Permission Denied", Toast.LENGTH_SHORT).show();
 
                 }
                 return;
@@ -451,6 +468,8 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
         mMap.clear();
     }
     private void clearRedundant(){
+        Log.d(TAG, "State : " + userState.toString());
+
         if(userState != UserState.SELECTING_MARKER){
             if(chosenCircle != null) {
                 chosenCircle.remove();
@@ -469,8 +488,12 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
         if(makeGeofenceAtMarker_Button.getVisibility() == View.VISIBLE){
             makeGeofenceAtMarker_Button.setVisibility(View.INVISIBLE);
         }
+
+        if(getDirectionsButton.getVisibility() == View.VISIBLE){
+            getDirectionsButton.setVisibility(View.INVISIBLE);
+        }
 //        userState = UserState.NORMAL;
-        Log.d(ACTIVITY_NAME, "clearRedundant()");
+        Log.d(TAG, "clearRedundant()");
     }
 
     private void createDestinationMarker(LatLng latLng) {
@@ -482,6 +505,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
                 .fillColor(0x00000000));
         chosenMarker = mMap.addMarker(new MarkerOptions().position(latLng).title("Picked"));
         makeGeofenceAtMarker_Button.setVisibility(View.VISIBLE);
+        getDirectionsButton.setVisibility(View.VISIBLE);
         userState = UserState.NORMAL;
     }
     private void changeCamera(CameraUpdate update) {
@@ -494,19 +518,30 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
     }
 
     /** Listeners */
+    private View.OnClickListener getDirectionsListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+//            DirectionsFragment dr = new DirectionsFragment();
+//            TabLayoutActivity tabLayoutActivity = (TabLayoutActivity) getActivity();
+//            ViewPager viewPager = tabLayoutActivity.getViewPager();
+//            viewPager.setCurrentItem(1);
+
+        }
+    };
+
     private View.OnClickListener makeGeofenceAtMarkerListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-//            AddGeofenceAtLocation(v);
-//            userState = UserState.ADDING_MARKER;
-//            clearRedundant();
-            startActivity(new Intent(getContext(), DirectionsFragment.class));
+            AddGeofenceAtLocation(v);
+            userState = UserState.ADDING_MARKER;
+            clearRedundant();
         }
     };
 
     private View.OnClickListener deleteGeofenceAtMarkerListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
+            userState = UserState.DELETING_MARKER;
             deleteGeofenceOnMap();
         }
 
@@ -517,7 +552,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
     private GoogleMap.OnMapClickListener onMapClickListener = new GoogleMap.OnMapClickListener(){
         @Override
         public void onMapClick(LatLng latLng){
-            Log.i(ACTIVITY_NAME, "Map Clicked at " + latLng.toString());
+            Log.i(TAG, "Map Clicked at " + latLng.toString());
             clearRedundant();
         }
     };
@@ -525,7 +560,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
     private GoogleMap.OnMapLongClickListener onMapLongClickListener = new GoogleMap.OnMapLongClickListener() {
         @Override
         public void onMapLongClick(LatLng latLng) {
-            Log.i(ACTIVITY_NAME, "Marker Clicked");
+            Log.i(TAG, "Marker Clicked");
             createDestinationMarker(latLng);
         }
     };
@@ -533,7 +568,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
     private GoogleMap.OnMarkerClickListener onMarkerClickListener = new GoogleMap.OnMarkerClickListener() {
         @Override
         public boolean onMarkerClick(Marker marker) {
-            Log.i(ACTIVITY_NAME, "Marker Clicked");
+            Log.i(TAG, "Marker Clicked");
             boolean marker_exists_in_dictionary = false;
 
             //check if marker exists in geofence
@@ -553,7 +588,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
             }
 
             if(marker_exists_in_dictionary){
-                Log.d(ACTIVITY_NAME, "Marker exists in dictionary");
+                Log.d(TAG, "Marker exists in dictionary");
                 isMarkerClickedOnExistingDestination= true;
                 chosenMarker.showInfoWindow();
                 userState = UserState.SELECTING_MARKER;
@@ -561,11 +596,12 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
                 deleteGeofenceAtMarker_Button.setVisibility(View.VISIBLE);
             }
             else{
-                Log.d(ACTIVITY_NAME, "Marker does not exist in dictionary");
+                Log.d(TAG, "Marker does not exist in dictionary");
                 makeGeofenceAtMarker_Button.setVisibility(View.VISIBLE);
+                getDirectionsButton.setVisibility(View.VISIBLE);
             }
-            Log.d(ACTIVITY_NAME, marker.getTitle() + " clicked");
-//        Log.d(ACTIVITY_NAME, "Cirlce getcenter(): " + circle.getCenter().toString());
+            Log.d(TAG, marker.getTitle() + " clicked");
+//        Log.d(TAG, "Cirlce getcenter(): " + circle.getCenter().toString());
 
 
             return false;
@@ -589,7 +625,7 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
             }
         }
         if(key == null) {
-            Log.w(ACTIVITY_NAME, "Key is null");
+            Log.w(TAG, "Key is null");
             return;
         }
         GeofenceManager.removeParticularGeofence(mGoogleAPIClient, key);
@@ -597,36 +633,39 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
 
     private void AddGeofenceAtLocation(View v){
         if(chosenMarker.getPosition() == null){
-            Log.e(ACTIVITY_NAME, "chosenMarker is null");
+            Log.e(TAG, "chosenMarker is null");
             return;
         }
 
         if(!mGoogleAPIClient.isConnected() || mGoogleAPIClient.isConnecting() ){
-            Log.e(ACTIVITY_NAME, "Google API Client is not connected yet");
+            Log.e(TAG, "Google API Client is not connected yet");
             initializeGoogleAPIClient();
         }
         if(!mGoogleAPIClient.isConnected()) return;
 
         MyGeofence newGeofence = new MyGeofence(chosenCircle.getCenter());
 
+        updateLastKnownLocation();
         float[] distanceArray = new float[1];
         Location.distanceBetween(chosenCircle.getCenter().latitude, chosenCircle.getCenter().longitude,
-                locationLocation.getLatitude(), locationLocation.getLongitude(),
+                lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude(),
                 distanceArray);
         float distance = distanceArray[0];
+
         newGeofence.setDistance(distance);
+
         GeofenceManager.addGeofence(mMap, newGeofence, myGeofenceList,destinationDictionary);
         GeofenceManager.SendGeofence(v, myGeofenceList, mGoogleAPIClient, mGeofencePendingIntent, getContext(), this);
 
         mOnGeofenceListener.onCreateGeofence(myGeofenceList);
-        Log.d(ACTIVITY_NAME, "calling addGeofence(chosenMarker.getPosition())");
+        Log.d(TAG, "calling addGeofence(chosenMarker.getPosition())");
     }
 
     private void removeAllGeofences(GoogleApiClient mGoogleAPIClient){
         LocationServices.GeofencingApi.removeGeofences(
                 mGoogleAPIClient,
                 GeofenceManager.getGeofencePendingIntent(mGeofencePendingIntent, getContext())).setResultCallback(this);
-        Log.d(ACTIVITY_NAME, "Removed Geofences");
+        Log.d(TAG, "Removed Geofences");
     }
 
 
@@ -641,34 +680,36 @@ public class MapFragment extends Fragment implements OnMapReadyCallback, ResultC
      */
     @Override
     public void onConnected(@Nullable Bundle bundle) {
-        Log.i(ACTIVITY_NAME, "onConnected()");
+        Log.i(TAG, "onConnected()");
         startLocationUpdates();
     }
 
     @Override
     public void onConnectionSuspended(int i) {
-        Log.i(ACTIVITY_NAME, "onConnectionSuspended()");
+        Log.i(TAG, "onConnectionSuspended()");
         stopLocationUpdates();
     }
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-        Log.i(ACTIVITY_NAME, "onConnectionFailed" +
+        Log.i(TAG, "onConnectionFailed" +
                 "()");
 
     }
 
     private void startLocationUpdates() {
-        try{
-            LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleAPIClient, locationRequest, myLocationListener);
-        }catch(SecurityException e){
-            Log.e(ACTIVITY_NAME, e.getMessage());
+        if(locationRequest != null && myLocationListener != null){
+            try{
+                LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleAPIClient, locationRequest, myLocationListener);
+            }catch(SecurityException e){
+                Log.e(TAG, e.getMessage());
+            }
         }
     }
 
     private void stopLocationUpdates() {
         LocationServices.FusedLocationApi.removeLocationUpdates(
                 mGoogleAPIClient, myLocationListener);
-        Log.d(ACTIVITY_NAME, "stopLocationUpdates");
+        Log.d(TAG, "stopLocationUpdates");
     }
 }

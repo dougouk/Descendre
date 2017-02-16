@@ -19,6 +19,8 @@ public class MyGeofence {
     private Geofence geofence;
     private LatLng latLngCenter;
     private String address;
+
+    // distance from user
     private float distance;
 
 
@@ -39,6 +41,9 @@ public class MyGeofence {
                 dateFormat.format(Calendar.getInstance().getTime()),
                 latLngCenter.latitude,
                 latLngCenter.longitude);
+    }
+    public String getKey(){
+        return key;
     }
 
     public LatLng getCenter(){
@@ -63,9 +68,6 @@ public class MyGeofence {
 
     public void setGeofence(Geofence geofence) {
         this.geofence = geofence;
-    }
-    public String getKey(){
-        return key;
     }
 
     public String getAddress(){

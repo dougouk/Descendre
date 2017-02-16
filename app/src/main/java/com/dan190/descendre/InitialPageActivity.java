@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 
+import com.dan190.descendre.Map.MapViewFragment;
 import com.dan190.descendre.Util.Prefs;
 import com.google.android.gms.location.places.ui.PlacePicker;
 
@@ -26,7 +27,7 @@ public class InitialPageActivity extends Activity {
         myMaps.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(getApplicationContext(), MapsActivity.class);
+                Intent intent = new Intent(getApplicationContext(), MapViewFragment.class);
                 startActivity(intent);
             }
         });

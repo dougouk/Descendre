@@ -6,12 +6,7 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
-import 	android.support.v13.app.FragmentCompat;
-import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
-import android.util.Log;
-
-import com.dan190.descendre.MapsActivity;
 
 /**
  * Created by Dan on 17/11/2016.

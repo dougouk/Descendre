@@ -1,8 +1,9 @@
 package com.dan190.descendre.AlarmMonitor;
 
+import android.app.Fragment;
+import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.UiThread;
-import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,6 +13,7 @@ import android.widget.ListView;
 
 import com.dan190.descendre.Geofence.MyGeofence;
 import com.dan190.descendre.R;
+import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.maps.model.LatLng;
 
 import java.util.List;
@@ -28,6 +30,11 @@ public class AlarmMonitorFragment extends Fragment {
     private Button clearAllButton;
     OnAlarmMonitorListener mAlarmMonitorListener;
 
+    @Override
+    public void onAttach(Context context){
+        super.onAttach(context);
+        mAlarmMonitorListener = (OnAlarmMonitorListener) context;
+    }
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState){
         view = inflater.inflate(R.layout.alarm_monitor_fragment, container, false);

@@ -50,7 +50,7 @@
 // */
 //
 //public class MapManager  implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, ResultCallback<Status> {
-//    static final String ACTIVITY_NAME = "MAP_MANAGER";
+//    static final String TAG = "MAP_MANAGER";
 //
 //    private GoogleMap mMap;
 //    private UiSettings mUiSettings;
@@ -82,7 +82,7 @@
 //
 //    @Override
 //    public void onMapReady(GoogleMap googleMap) {
-//        Log.i(ACTIVITY_NAME, "onMapReady()");
+//        Log.i(TAG, "onMapReady()");
 //
 //        mMap = googleMap;
 //
@@ -105,7 +105,7 @@
 //                locationLocation = locationManager.getLastKnownLocation(provider);
 //            }
 //        }catch (SecurityException e){
-//            Log.e(ACTIVITY_NAME, e.getMessage());
+//            Log.e(TAG, e.getMessage());
 //        }
 //
 //
@@ -118,7 +118,7 @@
 //        try{
 //            mMap.setMyLocationEnabled(true);
 //        }catch(SecurityException e){
-//            Log.e(ACTIVITY_NAME, "Needs Location Permission");
+//            Log.e(TAG, "Needs Location Permission");
 //        }
 //
 //        mMap.setOnMapClickListener(onMapClickListener);
@@ -147,9 +147,9 @@
 //                placeAutocompleteFragment.setOnPlaceSelectedListener(new PlaceSelectionListener() {
 //                    @Override
 //                    public void onPlaceSelected(Place place) {
-//                        Log.d(ACTIVITY_NAME, "Selected place Add is : " + place.getAddress().toString());
-//                        Log.d(ACTIVITY_NAME, "Selected place LatLng is : " + place.getLatLng().toString());
-//                        Log.d(ACTIVITY_NAME, "Selected place Name is : " + place.getName().toString());
+//                        Log.d(TAG, "Selected place Add is : " + place.getAddress().toString());
+//                        Log.d(TAG, "Selected place LatLng is : " + place.getLatLng().toString());
+//                        Log.d(TAG, "Selected place Name is : " + place.getName().toString());
 //                        clearRedundant();
 //                        chosenMarker = mMap.addMarker(new MarkerOptions()
 //                                .position(place.getLatLng())
@@ -165,12 +165,12 @@
 //                    @Override
 //                    public void onError(Status status) {
 //                        Toast.makeText(MapFragment.getFragmentContext(), "Cannot find place", Toast.LENGTH_SHORT).show();
-//                        Log.e(ACTIVITY_NAME, status.getStatusMessage());
+//                        Log.e(TAG, status.getStatusMessage());
 //                    }
 //                });
 //            }
 //            else{
-//                Log.e(ACTIVITY_NAME, "placeAutocomplete Fragment not loaded");
+//                Log.e(TAG, "placeAutocomplete Fragment not loaded");
 //            }
 //            destinationDictionary = new HashMap<Marker, Circle>() {
 //            };
@@ -219,26 +219,26 @@
 //
 //    private void AddGeofenceAtLocation(View v){
 //        if(chosenMarker.getPosition() == null){
-//            Log.e(ACTIVITY_NAME, "chosenMarker is null");
+//            Log.e(TAG, "chosenMarker is null");
 //            return;
 //        }
 //
 //        if(!mGoogleAPIClient.isConnected() || mGoogleAPIClient.isConnecting() ){
-//            Log.e(ACTIVITY_NAME, "Google API Client is not connected yet");
+//            Log.e(TAG, "Google API Client is not connected yet");
 //            connectGoogleAPIClient();
 //        }
 //        if(!mGoogleAPIClient.isConnected()) return;
 //        GeofenceManager.addGeofence(mMap, chosenMarker.getPosition(), mGeofenceList,destinationDictionary);
 //        GeofenceManager.SendGeofence(v, mGeofenceList, mGoogleAPIClient, mGeofencePendingIntent, MapFragment.getFragmentContext(), this);
 //
-//        Log.d(ACTIVITY_NAME, "calling addGeofence(chosenMarker.getPosition())");
+//        Log.d(TAG, "calling addGeofence(chosenMarker.getPosition())");
 //    }
 //
 //    private void removeGeofences(){
 //        LocationServices.GeofencingApi.removeGeofences(
 //                mGoogleAPIClient,
 //                GeofenceManager.getGeofencePendingIntent(mGeofencePendingIntent, MapFragment.getFragmentContext())).setResultCallback(this);
-//        Log.d(ACTIVITY_NAME, "Removed Geofences");
+//        Log.d(TAG, "Removed Geofences");
 //    }
 //    /**
 //     * Map Modifiers
@@ -263,7 +263,7 @@
 //            makeGeofenceAtMarker_Button.setVisibility(View.INVISIBLE);
 //        }
 ////        userState = UserState.NORMAL;
-//        Log.d(ACTIVITY_NAME, "clearRedundant()");
+//        Log.d(TAG, "clearRedundant()");
 //    }
 //
 //    private void createDestinationMarker(LatLng latLng) {
@@ -308,13 +308,13 @@
 //        @Override
 //        public void onClick(View v) {
 //            removeGeofences();
-//            Log.i(ACTIVITY_NAME, "Remove Geofences()");
+//            Log.i(TAG, "Remove Geofences()");
 //        }
 //    };
 //    private GoogleMap.OnMapClickListener onMapClickListener = new GoogleMap.OnMapClickListener(){
 //        @Override
 //        public void onMapClick(LatLng latLng){
-//            Log.i(ACTIVITY_NAME, "Map Clicked at " + latLng.toString());
+//            Log.i(TAG, "Map Clicked at " + latLng.toString());
 //            clearRedundant();
 //        }
 //    };
@@ -322,7 +322,7 @@
 //    private GoogleMap.OnMapLongClickListener onMapLongClickListener = new GoogleMap.OnMapLongClickListener() {
 //        @Override
 //        public void onMapLongClick(LatLng latLng) {
-//            Log.i(ACTIVITY_NAME, "Marker Clicked");
+//            Log.i(TAG, "Marker Clicked");
 //            createDestinationMarker(latLng);
 //        }
 //    };
@@ -330,7 +330,7 @@
 //    private GoogleMap.OnMarkerClickListener onMarkerClickListener = new GoogleMap.OnMarkerClickListener() {
 //        @Override
 //        public boolean onMarkerClick(Marker marker) {
-//            Log.i(ACTIVITY_NAME, "Marker Clicked");
+//            Log.i(TAG, "Marker Clicked");
 //            boolean marker_exists_in_dictionary = false;
 //
 //            //check if marker exists in geofence
@@ -352,8 +352,8 @@
 //            else{
 //                makeGeofenceAtMarker_Button.setVisibility(View.VISIBLE);
 //            }
-//            Log.d(ACTIVITY_NAME, marker.getTitle() + " clicked");
-////        Log.d(ACTIVITY_NAME, "Cirlce getcenter(): " + circle.getCenter().toString());
+//            Log.d(TAG, marker.getTitle() + " clicked");
+////        Log.d(TAG, "Cirlce getcenter(): " + circle.getCenter().toString());
 //
 //
 //            return false;
@@ -364,35 +364,35 @@
 //    /** Connections */
 //    @Override
 //    public void onConnected(@Nullable Bundle bundle) {
-//        Log.i(ACTIVITY_NAME, "onConnected");
+//        Log.i(TAG, "onConnected");
 //        startLocationUpdates();
 //    }
 //
 //    @Override
 //    public void onConnectionSuspended(int i) {
-//        Log.i(ACTIVITY_NAME, "onConnectionSuspended");
+//        Log.i(TAG, "onConnectionSuspended");
 //        stopLocationUpdates();
 //
 //    }
 //
 //    @Override
 //    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
-//        Log.i(ACTIVITY_NAME, "onConnectionFailed");
+//        Log.i(TAG, "onConnectionFailed");
 //    }
 //
 //    private void startLocationUpdates(){
 //        try{
 //            LocationServices.FusedLocationApi.requestLocationUpdates(
 //                    mGoogleAPIClient, locationRequest, myLocationListener);
-//            Log.i(ACTIVITY_NAME, "Started Location Updates");
+//            Log.i(TAG, "Started Location Updates");
 //        }catch (SecurityException e){
-//            Log.e(ACTIVITY_NAME, e.getMessage());
+//            Log.e(TAG, e.getMessage());
 //        }
 //    }
 //
 //    private void stopLocationUpdates(){
 //        LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleAPIClient, myLocationListener);
-//        Log.i(ACTIVITY_NAME, "Stopped Location Updates");
+//        Log.i(TAG, "Stopped Location Updates");
 //
 //    }
 //
