@@ -1,12 +1,12 @@
 package com.dan190.descendre;
 
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentStatePagerAdapter;
+import android.app.Fragment;
+import android.app.FragmentManager;
+import android.support.v13.app.FragmentStatePagerAdapter;
 
 import com.dan190.descendre.AlarmMonitor.AlarmMonitorFragment;
-import com.dan190.descendre.Map.DirectionsFragment;
-import com.dan190.descendre.Map.MapFragment;
+import com.dan190.descendre.Directions.DirectionsFragment;
+import com.dan190.descendre.Map.MapViewFragment;
 import com.dan190.descendre.Settings.SettingsFragment;
 
 /**
@@ -27,7 +27,7 @@ public class PagerAdapter extends FragmentStatePagerAdapter {
         if(fragments[position] == null){
             switch (position){
                 case 0:
-                    MapFragment tab1 = new MapFragment();
+                    MapViewFragment tab1 = new MapViewFragment();
                     return tab1;
                 case 1:
                     DirectionsFragment tab2 = new DirectionsFragment();
