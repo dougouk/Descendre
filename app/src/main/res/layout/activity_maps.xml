@@ -4,46 +4,32 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
-    <fragment
-        android:name="com.google.android.gms.location.places.ui.PlaceAutocompleteFragment"
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/searchFragment"/>
+        android:layout_height="match_parent">
 
-<FrameLayout
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:orientation="vertical">
-    <fragment
-        android:id="@+id/map"
-        android:name="com.google.android.gms.maps.SupportMapFragment"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        tools:context="com.dan190.descendre.MapsActivity" />
-    <!--<Button-->
-        <!--android:id="@+id/button_placePicker_activity_maps"-->
-        <!--android:layout_width="wrap_content"-->
-        <!--android:layout_height="wrap_content"-->
-        <!--android:layout_gravity="bottom"-->
-        <!--android:text="Use PlacePicker"/>-->
+        <fragment
+            android:name="com.google.android.gms.location.places.ui.PlaceAutocompleteFragment"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/searchFragment"/>
 
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/makeGeofenceAtMarker_button"
-        android:layout_gravity="bottom"
-        android:layout_marginBottom="40dp"
-        android:text="Set alarm at location"/>
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/deleteMarker_button"
-        android:layout_gravity="bottom"
-        android:layout_marginBottom="40dp"
+        <com.google.android.gms.maps.MapView
+            android:id="@+id/mapView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
 
-        android:text="Delete selected point"/>
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/getDirectionsButton"
+            android:layout_gravity="bottom"
+            android:layout_marginBottom="80dp"
+            android:text="@string/getDirections"/>
 
-</FrameLayout>
+    </FrameLayout>
+
+
 
 </LinearLayout>
 
