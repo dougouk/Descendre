@@ -134,7 +134,8 @@ public class MapViewFragment extends Fragment implements GoogleApiClient.Connect
                 googleMap.setOnMapClickListener(onMapClickListener);
                 googleMap.setOnMapLongClickListener(onMapLongClickListener);
                 googleMap.setOnMarkerClickListener(onMarkerClickListener);
-
+                googleMap.setOnCameraIdleListener(mOnCameraIdleListener);
+                
                 mUiSettings = googleMap.getUiSettings();
                 mUiSettings.setMapToolbarEnabled(true);
                 mUiSettings.setZoomControlsEnabled(true );
@@ -153,8 +154,10 @@ public class MapViewFragment extends Fragment implements GoogleApiClient.Connect
                 //Get Nearby Bus Stops
                 ParserTask parserTask = new ParserTask();
                 LatLng fort = new LatLng(45.4911845, -73.5814331);
-                parserTask.execute(BusStopJSON.
-                        getNearbyBusStops(fort, 300, getResources().getString(R.string.google_maps_key)));
+//                parserTask.execute(BusStopJSON.
+//                        getNearbyBusStops(new LatLng(mUserLocation.getLatitude(), mUserLocation.getLongitude()),
+//                                300,
+//                                getResources().getString(R.string.google_maps_key)));
             }
         });
 
@@ -322,13 +325,14 @@ public class MapViewFragment extends Fragment implements GoogleApiClient.Connect
             }
         }
 
-//        isMarkerClickedOnExistingDestination = false;
-
         if(getDirectionsButton.getVisibility() == View.VISIBLE){
             getDirectionsButton.setVisibility(View.INVISIBLE);
         }
-//        userState = UserState.NORMAL;
-        Log.d(TAG, "clearRedundant()");
+
+        for(Marker busStopMarker : busStopMarkers){
+            busStopMarker.remove();
+        }
+        Log.d(TAG, "clearRedundant() finished");
     }
 
     private void createDestinationMarker(LatLng latLng) {
@@ -347,6 +351,17 @@ public class MapViewFragment extends Fragment implements GoogleApiClient.Connect
      * Listeners
      */
 
+    private GoogleMap.OnCameraIdleListener mOnCameraIdleListener = new GoogleMap.OnCameraIdleListener() {
+        @Override
+        public void onCameraIdle() {
+            Log.i(TAG, "onCameraIdle");
+            clearRedundant();
+            ParserTask parserTask = new ParserTask();
+            parserTask.execute(BusStopJSON.getNearbyBusStops(googleMap.getCameraPosition().target,
+                    300,
+                    getResources().getString(R.string.google_maps_key)));
+        }
+    };
     private View.OnClickListener getDirectionsListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
