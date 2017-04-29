@@ -11,6 +11,9 @@ import android.widget.TableLayout;
 import com.dan190.descendre.AlarmMonitor.AlarmMonitorFragment;
 import com.dan190.descendre.Geofence.MyGeofence;
 import com.dan190.descendre.Map.MapFragment;
+import com.dan190.descendre.Map.MapViewFragment;
+import com.google.android.gms.location.places.Place;
+import com.google.android.gms.maps.model.LatLng;
 
 import java.util.List;
 
@@ -20,13 +23,15 @@ import java.util.List;
 
 public class TabLayoutActivity extends AppCompatActivity
         implements MapFragment.OnGeofenceListener,
-                    AlarmMonitorFragment.OnAlarmMonitorListener
+                    AlarmMonitorFragment.OnAlarmMonitorListener,
+        MapViewFragment.onDirectionRequestedListener
 {
     private static String TAG = TabLayoutActivity.class.getName();
 
 
 
     private ViewPager viewPager;
+    private PagerAdapter pagerAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,9 +47,9 @@ public class TabLayoutActivity extends AppCompatActivity
         tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
 
         viewPager = (ViewPager) findViewById(R.id.pager);
-        final PagerAdapter adapter = new PagerAdapter
+        pagerAdapter = new PagerAdapter
                 (getFragmentManager(), tabLayout.getTabCount());
-        viewPager.setAdapter(adapter);
+        viewPager.setAdapter(pagerAdapter);
         viewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
@@ -127,5 +132,16 @@ public class TabLayoutActivity extends AppCompatActivity
 //        else{
 //            mapFragment.clearAll();
 //        }
+    }
+
+    @Override
+    public void onDirectionRequested(LatLng origin, Place destination) {
+        pagerAdapter.onDirectionRequested(origin, destination);
+    }
+
+    @Override
+    public void onDirectionRequested(LatLng origin, LatLng destination) {
+        pagerAdapter.onDirectionRequested(origin, destination);
+
     }
 }
