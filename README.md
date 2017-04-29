@@ -10,4 +10,4 @@ Add an alarm to the location, so that you will receive an alarm upon entering th
 Phone will notify you with vibration, when user enters the circle
 ![Alt text](/readme/5.png?raw=true "App Layout")
 
-Copyright (c) <2017> <copyright Dongoug Kim>
+Copyright (c) 2017 Dongoug Kim
